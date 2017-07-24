@@ -16,6 +16,9 @@
 			"run_at": "document_start"
 		}
 	],
+	"background": {
+		"scripts": ["js/hopscotch.js"]
+	},
 	"web_accessible_resources": [
 		"assets/*"
 	]
