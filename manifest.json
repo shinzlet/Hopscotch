@@ -1,4 +1,19 @@
 {
-	"manifest-version": 2.0,
+	"manifest_version": 2,
+	"name": "Hopscotch",
+	"version": "0.0.0",
 
+	"permissions": [
+		"tabs",
+		"webNavigation",
+		"history"
+	],
+	"content_scripts": [
+		{
+			"matches": ["<all_urls>"],
+			"css": ["css/toolbox-style.css"],
+			"js": ["js/inject-toolbox.js"],
+			"run_at": "document_start"
+		}
+	]
 }
