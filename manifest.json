@@ -15,5 +15,8 @@
 			"js": ["js/inject-toolbox.js"],
 			"run_at": "document_start"
 		}
+	],
+	"web_accessible_resources": [
+		"assets/*"
 	]
 }
