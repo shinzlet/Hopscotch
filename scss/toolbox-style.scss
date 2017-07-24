@@ -1,0 +1,91 @@
+$frame-radius: 0px;
+$frame-width: 300px;
+$frame-edge-spacing: 50px;
+
+$toolbar-bg: #31263B;
+$chinbar-bg: #1A141F;
+$sandwich-bg: $chinbar-bg;
+$highlight: #FFE729;
+$animation-time: 250ms;
+
+$bar-height: 40px;
+
+* {
+	margin: 0px;
+}
+
+#hopscotch-toolbox-frame {
+	z-index: 1000000;
+	width: 0px;
+	position: fixed;
+	top: $frame-edge-spacing;
+	left: $frame-edge-spacing + $frame-width / 2;
+	overflow: hidden;
+	border-radius: $frame-radius;
+	transition: all $animation-time ease;
+
+	&.hopscotch-toolbox-active {
+		width: $frame-width;
+		left: $frame-edge-spacing;
+	}
+}
+
+.hopscotch-toolbox-bar {
+	width: $frame-width; // Do not use 100% - it'll make the animation weird
+	height: $bar-height;
+
+	&#hopscotch-toolbox-toolbar {
+		background-color: $toolbar-bg;
+	}
+
+	&#hopscotch-toolbox-chinbar {
+		background-color: $chinbar-bg;
+	}
+
+	& .hopscotch-toolbox-button {
+		height: $bar-height;
+		width: $bar-height;
+		float: left;
+		background-color: white;
+		transition: background-color $animation-time ease;
+
+		-webkit-mask-position: center;
+		-webkit-mask-size: 80%;
+		-webkit-mask-repeat: no-repeat;
+
+		&.hopscotch-toolbox-active, &:hover {
+			background-color: $highlight;
+		}
+
+		&.hopscotch-toolbox-button-add {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/add-icon.svg");
+		}
+
+		&.hopscotch-toolbox-button-root {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/root-icon.svg");
+		}
+
+		&.hopscotch-toolbox-button-remove {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/remove-icon.svg");
+		}
+
+		&.hopscotch-toolbox-button-view {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/hopscotch-icon.svg");
+		}
+	}
+}
+
+#hopscotch-toolbox-sandwich {
+	width: $frame-width;
+	background-color: $sandwich-bg;
+	transition: height $animation-time ease;
+	overflow: hidden;
+
+	&.hopscotch-toolbox-slice {
+		width: $frame-width;
+		transition: all $animation-time ease;
+		&:not(.hopscotch-toolbox-active) {
+			transform: translateX(-$frame-width);
+		}
+	}
+}
