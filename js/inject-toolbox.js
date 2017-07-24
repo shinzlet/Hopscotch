@@ -10,6 +10,7 @@ let toolbox = (function() {
 		components.frame = createElement('div', {id: `${hsp}frame`})
 		components.toolbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}toolbar`});
 		components.sandwich = createElement('div', {id: `${hsp}sandwich`});
+		components.browser = createElement('div', {class: `${hsp}slice ${hsp}active`}).setTextContent("Here's Trash!");
 		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
 
 		let button = name => {
@@ -37,9 +38,12 @@ let toolbox = (function() {
 
 		// Assemble structure
 		components.docfrag.appendChild(components.frame);
+
 		components.frame.appendChild(components.toolbar);
 		components.frame.appendChild(components.sandwich);
 		components.frame.appendChild(components.chinbar);
+
+		components.sandwich.appendChild(components.browser);
 
 		components.toolbar.appendChild(components.buttons['view']);
 		components.toolbar.appendChild(components.buttons['root']);

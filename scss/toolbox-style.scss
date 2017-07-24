@@ -1,4 +1,4 @@
-$frame-radius: 0px;
+$frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
 
@@ -16,17 +16,19 @@ $bar-height: 40px;
 
 #hopscotch-toolbox-frame {
 	z-index: 1000000;
-	width: 0px;
+	width: $frame-width;
 	position: fixed;
 	top: $frame-edge-spacing;
-	left: $frame-edge-spacing + $frame-width / 2;
+	left: $frame-edge-spacing;
+	opacity: 0;
+	transform: scale(0);
 	overflow: hidden;
 	border-radius: $frame-radius;
 	transition: all $animation-time ease;
 
 	&.hopscotch-toolbox-active {
-		width: $frame-width;
-		left: $frame-edge-spacing;
+		transform: scale(1);
+		opacity: 1;
 	}
 }
 
@@ -78,14 +80,17 @@ $bar-height: 40px;
 #hopscotch-toolbox-sandwich {
 	width: $frame-width;
 	background-color: $sandwich-bg;
+	transform: translateX(0px);
 	transition: height $animation-time ease;
 	overflow: hidden;
 
-	&.hopscotch-toolbox-slice {
+	& .hopscotch-toolbox-slice {
 		width: $frame-width;
 		transition: all $animation-time ease;
+		color: white;
 		&:not(.hopscotch-toolbox-active) {
 			transform: translateX(-$frame-width);
+			color: red;
 		}
 	}
 }
