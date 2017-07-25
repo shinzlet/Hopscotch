@@ -1,28 +1,33 @@
 const hsp = "hopscotch-toolbox-"; // Hopscotch prefix (for id seperation)
 
 let toolbox = (function() {
+	/*
+		components:
+			Contains references to all useful parts of the toolbox. Some DOM elements
+			have been injected with other functions - buttons, for example, contain
+			and activation and deactivation function.
+	*/
 	let components = {};
+
+	/*
+		buildFrame():
+			Creates a document fragment and populates it with the DOM structure.
+			Contains two structures; button and panel. These provide functionality
+			for the small icons in the toolbox tool & chin bars, and the ability for
+			page selection.
+	*/
 	function buildFrame() {
-		// Create the document fragment
-		components.docfrag = document.createDocumentFragment();
-
-		// Create elements
-		components.frame = createElement('div', {id: `${hsp}frame`})
-		components.toolbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}toolbar`});
-		components.sandwich = createElement('div', {id: `${hsp}sandwich`});
-		components.browser = createElement('div', {class: `${hsp}slice ${hsp}active`}).setTextContent("Here's Trash!");
-		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
-
-		let button = name => {
+		let button = (name, callback, /*optional callback param*/id) => {
+			if(id === undefined) id = name; // If id is not provided, use name instead
 			let elem = createElement('div', {class: `${hsp}button ${hsp}button-${name}`});
-			elem.addEventListener('click', () => { buttonPressed(name); });
+			elem.addEventListener('click', () => { callback(id); });
 
-			elem.activate = function() {
+			elem.activate = () => {
 				elem.classList.toggle(`${hsp}active`, true);
 				return elem;
 			}
 
-			elem.deactivate = function() {
+			elem.deactivate = () => {
 				elem.classList.toggle(`${hsp}active`, false);
 				return elem;
 			}
@@ -30,26 +35,64 @@ let toolbox = (function() {
 			return elem;
 		}
 
-		components.buttons = {};
+		let panel = (names, callback) => {
+			let buttons = [];
 
-		components.buttons['add'] = button('add');
-		components.buttons['root'] = button('root');
-		components.buttons['view'] = button('view').activate();
+			let cb = id => {
+				buttons.forEach((elem, index) => {
+					elem.classList.toggle(`${hsp}active`, id === index);
+				});
+
+				callback(names[id], id);
+			};
+
+			buttons = names.map((name, iter) => { return button(name, cb, iter); });
+			if(buttons[0]) buttons[0].activate();
+
+			return {
+				appendTo: parent => {
+					buttons.forEach(elem => { parent.appendChild(elem); });
+				}
+			};
+		}
+
+		// Initialize components
+		components.docfrag = document.createDocumentFragment();
+
+		components.frame = createElement('div', {id: `${hsp}frame`})
+
+		components.sandwich = createElement('div', {id: `${hsp}sandwich`});
+
+		components.slices = ['browser', 'settings', 'root'];
+		components.browser = createElement('div', {class: `${hsp}slice ${hsp}browser ${hsp}active`});
+		components.root = createElement('div', {class: `${hsp}slice ${hsp}browser`});
+		components.settings = createElement('div', {class: `${hsp}slice ${hsp}settings`});
+
+		components.toolbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}toolbar`});
+		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
+
+		components.toolbar.buttons = panel(components.slices, switchMenu);
+		components.chinbar.buttons = ['backstep', 'add', 'remove'].map(name => {
+			return button(name, chinbarButtonPressed);
+		});
 
 		// Assemble structure
 		components.docfrag.appendChild(components.frame);
-
 		components.frame.appendChild(components.toolbar);
 		components.frame.appendChild(components.sandwich);
 		components.frame.appendChild(components.chinbar);
-
 		components.sandwich.appendChild(components.browser);
-
-		components.toolbar.appendChild(components.buttons['view']);
-		components.toolbar.appendChild(components.buttons['root']);
-		components.toolbar.appendChild(components.buttons['add']);
+		components.sandwich.appendChild(components.root);
+		components.sandwich.appendChild(components.settings);
+		components.toolbar.buttons.appendTo(components.toolbar);
+		components.chinbar.buttons.forEach(button => { components.chinbar.appendChild(button); });
 	}
 
+	/*
+		injectToolbox():
+			Injects the assembled toolbox DOM into the document body. If the page isn't quite loaded,
+			it creates an event listener to call itself when the page is ready.
+	*/
 	function injectToolbox() {
 		let inject = function() {
 			document.body.appendChild(components.docfrag);
@@ -64,10 +107,18 @@ let toolbox = (function() {
 		}
 	}
 
+	/*
+		bindToolbox():
+			Attaches event handlers relating to the operation of the toolbox.
+	*/
 	function bindToolbox() {
 		bindShortcut({keys: ['AltLeft', 'AltRight'], callback: toggle});
 	}
 
+	/*
+		loadLinks():
+
+	*/
 	function loadLinks() {
 
 	}
@@ -80,9 +131,18 @@ let toolbox = (function() {
 		return components.frame.offsetWidth !== 0;
 	}
 
-	function buttonPressed(name) {
-		Object.keys(components.buttons).forEach(key => {components.buttons[key].deactivate()});
-		components.buttons[name].activate();
+	function switchMenu(name) {
+		components.slices.forEach(elem => {
+			components[elem].classList.toggle(`${hsp}active`, elem === name);
+		});
+	}
+
+	/*
+		chinbarButtonPressed(name):
+			Provides a button handler callback for the chinbar.
+	*/
+	function chinbarButtonPressed(name) {
+
 	}
 
 	return {
@@ -101,7 +161,7 @@ let toolbox = (function() {
 toolbox.start(); // 🎉
 
 /*
-	createElement:
+	createElement(type, attributes, style):
 		A more robust function for creating DOM elements. Allows for the addition of
 		styling, tag properties (like id), and data-attributes. Also appends the
 		function "setTextContent" to the return element, allowing chaining.
@@ -134,7 +194,7 @@ function createElement(type, attributes, style) {
 }
 
 /*
-	bindShortcut:
+	bindShortcut(ops):
 		I'm not writing this a third time so I'm just borrowing it from Shrub.
 
 		takes an array of key event codes and a callback function. When all the keys are pressed,

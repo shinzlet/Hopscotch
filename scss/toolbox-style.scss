@@ -1,21 +1,38 @@
+@font-face {
+	src: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/font/FiraCode-Regular.ttf');
+	font-family: "Fira Code";
+	font-weight: normal;
+}
+
+@font-face {
+	src: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/font/FiraCode-Light.ttf');
+	font-family: "Fira Code";
+	font-weight: lighter;
+}
+
 $frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
 
-$toolbar-bg: #31263B;
-$chinbar-bg: #1A141F;
-$sandwich-bg: $chinbar-bg;
-$highlight: #FFE729;
-$animation-time: 250ms;
+$toolbar-bg: #7476FF;
+$chinbar-bg: #eee;
+$chinbar-button-color: #333;
+$chinbar-button-inactive-color: #555;
+$chinbar-button-disabled-color: #888;
+$sandwich-bg: #eee;
+$highlight: #fff;
+$button-inactive-color: rgba(255, 255, 255, 0.5);
+$long-animation-time: 200ms;
+$snappy-animation-time: 100ms;
 
 $bar-height: 40px;
-
-* {
-	margin: 0px;
-}
+$link-height: $bar-height;
+$link-count: 5;
+$link-bg: rgba(0, 0, 0, 0);
+$link-highlight: rgba(255, 255, 255, 0.2);
 
 #hopscotch-toolbox-frame {
-	z-index: 1000000;
+	z-index: 1000000; // I wish that websites didn't abuse z-index this much
 	width: $frame-width;
 	position: fixed;
 	top: $frame-edge-spacing;
@@ -24,11 +41,21 @@ $bar-height: 40px;
 	transform: scale(0);
 	overflow: hidden;
 	border-radius: $frame-radius;
-	transition: all $animation-time ease;
+	transition: all $long-animation-time ease;
 
 	&.hopscotch-toolbox-active {
 		transform: scale(1);
 		opacity: 1;
+	}
+
+	* {
+		margin: 0px;
+		-webkit-font-smoothing: subpixel-antialiased;
+		font-family: "Fira Code";
+	}
+
+	::-webkit-scrollbar {
+    display: none;
 	}
 }
 
@@ -41,15 +68,26 @@ $bar-height: 40px;
 	}
 
 	&#hopscotch-toolbox-chinbar {
-		background-color: $chinbar-bg;
+		background-color: $sandwich-bg;
+		& .hopscotch-toolbox-button {
+			background-color: $chinbar-button-color;
+			&.hopscotch-toolbox-active, &:hover {
+				background-color: $chinbar-button-inactive-color;
+			}
+
+			&.hopscotch-toolbox-disabled {
+				background-color: $chinbar-button-disabled-color;
+			}
+		}
 	}
 
-	& .hopscotch-toolbox-button {
+	.hopscotch-toolbox-button {
 		height: $bar-height;
 		width: $bar-height;
 		float: left;
-		background-color: white;
-		transition: background-color $animation-time ease;
+		background-color: $button-inactive-color;
+		transition: background-color $snappy-animation-time ease;
+		cursor: pointer;
 
 		-webkit-mask-position: center;
 		-webkit-mask-size: 80%;
@@ -60,19 +98,28 @@ $bar-height: 40px;
 		}
 
 		&.hopscotch-toolbox-button-add {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/add-icon.svg");
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/add-icon.svg");
 		}
 
 		&.hopscotch-toolbox-button-root {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/root-icon.svg");
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/root-icon.svg");
 		}
 
 		&.hopscotch-toolbox-button-remove {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/remove-icon.svg");
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/remove-icon.svg");
 		}
 
-		&.hopscotch-toolbox-button-view {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/hopscotch-icon.svg");
+		&.hopscotch-toolbox-button-browser {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/hopscotch-icon.svg");
+		}
+
+		&.hopscotch-toolbox-button-backstep {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/backstep-icon.svg");
+		}
+
+		&.hopscotch-toolbox-button-settings {
+			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/settings-icon.svg");
+			float: right !important;
 		}
 	}
 }
@@ -81,16 +128,65 @@ $bar-height: 40px;
 	width: $frame-width;
 	background-color: $sandwich-bg;
 	transform: translateX(0px);
-	transition: height $animation-time ease;
+	transition: height $long-animation-time;
 	overflow: hidden;
 
-	& .hopscotch-toolbox-slice {
+	.hopscotch-toolbox-slice {
 		width: $frame-width;
-		transition: all $animation-time ease;
+		transition: all $long-animation-time;
 		color: white;
+		margin: 0;
+		overflow: hidden;
+
 		&:not(.hopscotch-toolbox-active) {
-			transform: translateX(-$frame-width);
-			color: red;
+			transform: translateX($frame-width);
+			max-height: $link-height !important;
+			margin-top: -$link-height;
 		}
+
+		&.hopscotch-toolbox-browser {
+			max-height: $link-height * $link-count;
+			min-height: $link-height;
+			overflow-y: scroll;
+
+			&:empty {
+				//TODO Put an image here or something
+			}
+		}
+
+		&.hopscotch-toolbox-settings {
+			min-height: $link-height;
+			max-height: $link-height * $link-count;
+		}
+	}
+}
+
+.hopscotch-toolbox-link {
+	width: 100%;
+	height: $link-height;
+	background-color: $link-bg;
+	transition: all $snappy-animation-time;
+	overflow: hidden;
+	text-align: right;
+
+	&::before {
+		content: '';
+		position: absolute;
+		left: 0px;
+		width: 10px;
+		height: $link-height;
+		transition: all $snappy-animation-time;
+	}
+
+	&:hover {
+		cursor: pointer;
+
+		&::before {
+			background-color: $link-highlight;
+		}
+	}
+
+	&:active {
+		background-color: $link-highlight;
 	}
 }
