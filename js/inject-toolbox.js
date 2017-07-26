@@ -10,6 +10,36 @@ let toolbox = (function() {
 	let components = {};
 
 	/*
+		currentMenu:
+			Contains a string indicating which menu is currently being displayed. This
+			variable will contain the last active menu if the menu has been closed.
+
+			Also see: isOpen()
+	*/
+	let currentMenu = 'browser';
+
+	/*
+		menuOpen:
+			Contains a boolean indicating whether or not the menu is currently open.
+
+			Also see: isOpen()
+	*/
+	let menuOpen = false;
+
+	/*
+		widgetVisible:
+			Contains a boolean indicating whether or not the attention widget is
+			currently visible.
+	*/
+	let widgetVisible = false;
+
+	/*
+		hovered:
+			True when the mouse is hovered over the hopscotch frame.
+	*/
+	let hovered = false;
+
+	/*
 		buildFrame():
 			Creates a document fragment and populates it with the DOM structure.
 			Contains two structures; button and panel. These provide functionality
@@ -20,7 +50,10 @@ let toolbox = (function() {
 		let button = (name, callback, /*optional callback param*/id) => {
 			if(id === undefined) id = name; // If id is not provided, use name instead
 			let elem = createElement('div', {class: `${hsp}button ${hsp}button-${name}`});
-			elem.addEventListener('click', () => { callback(id); });
+			elem.addEventListener('click', () => {
+				if(elem.classList.contains(`${hsp}disabled`)) return; // We don't care.
+				callback(id);
+			});
 
 			elem.activate = () => {
 				elem.classList.toggle(`${hsp}active`, true);
@@ -59,7 +92,10 @@ let toolbox = (function() {
 		// Initialize components
 		components.docfrag = document.createDocumentFragment();
 
+		components.wrapper = createElement('span');
+
 		components.frame = createElement('div', {id: `${hsp}frame`})
+		components.widget = createElement('div', {id: `${hsp}attention-widget`});
 
 		components.sandwich = createElement('div', {id: `${hsp}sandwich`});
 
@@ -72,12 +108,15 @@ let toolbox = (function() {
 		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
 
 		components.toolbar.buttons = panel(components.slices, switchMenu);
-		components.chinbar.buttons = ['backstep', 'add', 'remove'].map(name => {
+		components.chinbar.buttonNames = ['backstep', 'add', 'remove'];
+		components.chinbar.buttons = components.chinbar.buttonNames.map(name => {
 			return button(name, chinbarButtonPressed);
 		});
 
 		// Assemble structure
-		components.docfrag.appendChild(components.frame);
+		components.docfrag.appendChild(components.wrapper);
+		components.wrapper.appendChild(components.widget);
+		components.wrapper.appendChild(components.frame);
 		components.frame.appendChild(components.toolbar);
 		components.frame.appendChild(components.sandwich);
 		components.frame.appendChild(components.chinbar);
@@ -109,10 +148,36 @@ let toolbox = (function() {
 
 	/*
 		bindToolbox():
-			Attaches event handlers relating to the operation of the toolbox.
+			Attaches event handlers relating to the operation of the toolbox and the
+			attention widget.
 	*/
 	function bindToolbox() {
 		bindShortcut({keys: ['AltLeft', 'AltRight'], callback: toggle});
+
+		chrome.runtime.onMessage.addListener(function(message) {
+			if(message.action)
+				if(message.action === `pullUpWidget`)
+					toggleWidget(true);
+		});
+
+		components.widget.addEventListener('click', () => {
+			toggleWidget(false);
+			toggle(true);
+		});
+
+		document.addEventListener('click', () => {
+			if(!hovered && menuOpen) toggle(false);
+		});
+
+		components.frame.addEventListener('mouseenter', e => {
+			hovered = true;
+			document.body.style.overflowY = 'hidden';
+		});
+
+		components.frame.addEventListener('mouseleave', e => {
+			hovered = false;
+			document.body.style.overflowY = 'auto';
+		});
 	}
 
 	/*
@@ -120,20 +185,74 @@ let toolbox = (function() {
 
 	*/
 	function loadLinks() {
+		let link = (name, url) => {
+			let elem = createElement('div', {class: `${hsp}link`});
+			elem.appendChild(createElement('p').setTextContent(name));
+			elem.appendChild(createElement('p').setTextContent(url));
+
+			elem.addEventListener('click', () => {
+				toggle();
+			});
+			return elem;
+		};
+
 
 	}
 
-	function toggle() {
-		components.frame.classList.toggle(`${hsp}active`);
+	/*
+		toggle(state):
+			Toggles the menu's visibility. If a boolean is provided, the menu enter the
+			corresponding state.
+	*/
+	function toggle(state) {
+		if(state === undefined) state = !menuOpen;
+		components.frame.classList.toggle(`${hsp}active`, state);
+		menuOpen = state;
+		if(state) {
+			hovered = true;
+			if(widgetVisible) toggleWidget(false);
+		}
+	}
+
+	/*
+		toggleWidget(state):
+			Toggles the widget's visibility.
+
+			Also see: toggle(state)
+	*/
+	function toggleWidget(state) {
+		if(state === undefined) state = !widgetVisible;
+		components.widget.classList.toggle(`${hsp}active`, state);
+		widgetVisible = state;
 	}
 
 	function isOpen() {
-		return components.frame.offsetWidth !== 0;
+		return menuOpen;
 	}
 
+	/*
+		switchMenu(name):
+			The callback used for toolbar button presses. switchMenu is responsible
+			for enabling and disabling buttons in the chinbar (in settings, for example).
+	*/
 	function switchMenu(name) {
 		components.slices.forEach(elem => {
 			components[elem].classList.toggle(`${hsp}active`, elem === name);
+		});
+
+		currentMenu = name;
+
+		let activeButtons = [];
+
+		if(name === 'root') {
+			activeButtons = ['add', 'remove'];
+		} else if(name === 'browser') {
+			activeButtons = components.chinbar.buttonNames;
+		}
+
+		components.chinbar.buttonNames.forEach((name, iter) => {
+			components.chinbar.buttons[iter].classList
+				.toggle(`${hsp}disabled`, activeButtons.indexOf(name) === -1);
 		});
 	}
 
@@ -154,7 +273,8 @@ let toolbox = (function() {
 		},
 
 		toggle: toggle,
-		isOpen: isOpen
+		isOpen: isOpen,
+		toggleWidget: toggleWidget
 	};
 })();
 

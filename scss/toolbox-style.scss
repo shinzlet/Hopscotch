@@ -1,13 +1,13 @@
 @font-face {
 	src: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/font/FiraCode-Regular.ttf');
-	font-family: "Fira Code";
+	font-family: 'Fira Code';
 	font-weight: normal;
 }
 
 @font-face {
-	src: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/font/FiraCode-Light.ttf');
-	font-family: "Fira Code";
-	font-weight: lighter;
+	src: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/font/FiraCode-Bold.ttf');
+	font-family: 'Fira Code';
+	font-weight: bold;
 }
 
 $frame-radius: 5px;
@@ -16,20 +16,33 @@ $frame-edge-spacing: 50px;
 
 $toolbar-bg: #7476FF;
 $chinbar-bg: #eee;
-$chinbar-button-color: #333;
-$chinbar-button-inactive-color: #555;
+$chinbar-button-color: #555;
+$chinbar-button-inactive-color: #333;
 $chinbar-button-disabled-color: #888;
+$chinbar-button-pressed-color: $chinbar-button-inactive-color;
 $sandwich-bg: #eee;
 $highlight: #fff;
 $button-inactive-color: rgba(255, 255, 255, 0.5);
+$toolbar-button-pressed-color: $button-inactive-color;
 $long-animation-time: 200ms;
 $snappy-animation-time: 100ms;
 
 $bar-height: 40px;
 $link-height: $bar-height;
-$link-count: 5;
+$link-count: 4.5;
 $link-bg: rgba(0, 0, 0, 0);
-$link-highlight: rgba(255, 255, 255, 0.2);
+$link-highlight: rgba(0, 0, 0, 0.2);
+$link-url-color: #555;
+$link-name-color: black;
+
+$scrollbar-radius: 0px;
+$scrollbar-color: $link-highlight;
+$scrollbar-width: 10px;
+
+$widget-radius: 50%;
+$widget-color: $toolbar-bg;
+
+$widget-size: 75px;
 
 #hopscotch-toolbox-frame {
 	z-index: 1000000; // I wish that websites didn't abuse z-index this much
@@ -50,13 +63,19 @@ $link-highlight: rgba(255, 255, 255, 0.2);
 
 	* {
 		margin: 0px;
-		-webkit-font-smoothing: subpixel-antialiased;
-		font-family: "Fira Code";
+		-webkit-font-smoothing: antialiased;
+		font-family: 'Fira Code';
 	}
 
 	::-webkit-scrollbar {
-    display: none;
+		display: none;
 	}
+}
+
+// If the widget is visible and so is the menu, move the frame down.
+#hopscotch-toolbox-attention-widget.hopscotch-toolbox-active + #hopscotch-toolbox-frame {
+	background-color: red;
+	transform: translateY($widget-size + $frame-edge-spacing / 2);
 }
 
 .hopscotch-toolbox-bar {
@@ -70,13 +89,18 @@ $link-highlight: rgba(255, 255, 255, 0.2);
 	&#hopscotch-toolbox-chinbar {
 		background-color: $sandwich-bg;
 		& .hopscotch-toolbox-button {
-			background-color: $chinbar-button-color;
+			background-color: $chinbar-button-inactive-color;
 			&.hopscotch-toolbox-active, &:hover {
-				background-color: $chinbar-button-inactive-color;
+				background-color: $chinbar-button-color;
+			}
+
+			&:active {
+				background-color: $chinbar-button-pressed-color;
 			}
 
 			&.hopscotch-toolbox-disabled {
 				background-color: $chinbar-button-disabled-color;
+				cursor: default;
 			}
 		}
 	}
@@ -97,28 +121,32 @@ $link-highlight: rgba(255, 255, 255, 0.2);
 			background-color: $highlight;
 		}
 
+		&:active {
+			background-color: $toolbar-button-pressed-color;
+		}
+
 		&.hopscotch-toolbox-button-add {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/add-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/add-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-root {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/root-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/root-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-remove {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/remove-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/remove-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-browser {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/hopscotch-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/hopscotch-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-backstep {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/backstep-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/backstep-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-settings {
-			-webkit-mask-image: url("chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/settings-icon.svg");
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/settings-icon.svg');
 			float: right !important;
 		}
 	}
@@ -167,26 +195,58 @@ $link-highlight: rgba(255, 255, 255, 0.2);
 	background-color: $link-bg;
 	transition: all $snappy-animation-time;
 	overflow: hidden;
-	text-align: right;
+	padding: 0 10px;
 
-	&::before {
-		content: '';
-		position: absolute;
-		left: 0px;
-		width: 10px;
-		height: $link-height;
+	p {
 		transition: all $snappy-animation-time;
+		&:nth-child(1) {
+			font-weight: bold;
+			color: $link-name-color;
+		}
+
+		&:nth-child(2) {
+			color: $link-url-color;
+		}
 	}
 
 	&:hover {
 		cursor: pointer;
-
-		&::before {
-			background-color: $link-highlight;
+		p {
+			transform: translateX(10px);
 		}
 	}
 
 	&:active {
 		background-color: $link-highlight;
+	}
+}
+
+#hopscotch-toolbox-attention-widget {
+	z-index: 1000000 - 1; // This shouldn't be on top of the menu.
+	position: fixed;
+	width: $widget-size;
+	height: $widget-size;
+	left: $frame-edge-spacing;
+	top: $frame-edge-spacing;
+	transform: scale(0.0);
+	border-radius: $widget-radius;
+	transition: all $long-animation-time;
+	background-color: $widget-color;
+
+	&.hopscotch-toolbox-active {
+		transform: scale(1.0);
+	}
+
+	&::after {
+		content: '';
+		width: $widget-size;
+		height: $widget-size;
+		-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/notification-icon.svg');
+		-webkit-mask-position: center;
+		-webkit-mask-repeat: no-repeat;
+		-webkit-mask-size: 80%;
+		background-color: white;
+		display: inline-block;
+		shape-rendering: crispEdges;
 	}
 }
