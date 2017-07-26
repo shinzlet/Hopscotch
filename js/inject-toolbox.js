@@ -94,7 +94,7 @@ let toolbox = (function() {
 
 		components.wrapper = createElement('span');
 
-		components.frame = createElement('div', {id: `${hsp}frame`})
+		components.frame = createElement('div', {id: `${hsp}frame`});
 		components.widget = createElement('div', {id: `${hsp}attention-widget`});
 
 		components.sandwich = createElement('div', {id: `${hsp}sandwich`});

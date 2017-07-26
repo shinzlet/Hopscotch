@@ -42,7 +42,10 @@ $scrollbar-width: 10px;
 $widget-radius: 50%;
 $widget-color: $toolbar-bg;
 
-$widget-size: 75px;
+$widget-size: 150px;
+$hat-size: 150px;
+$hat-position: center;
+$hat-transform: translateY(70px);
 
 #hopscotch-toolbox-frame {
 	z-index: 1000000; // I wish that websites didn't abuse z-index this much
@@ -53,12 +56,23 @@ $widget-size: 75px;
 	opacity: 0;
 	transform: scale(0);
 	overflow: hidden;
-	border-radius: $frame-radius;
 	transition: all $long-animation-time ease;
 
 	&.hopscotch-toolbox-active {
 		transform: scale(1);
 		opacity: 1;
+	}
+
+	&.hopscotch-toolbox-has-hat::before {
+		content: '';
+		z-index: inherit;
+		width: $frame-width;
+		height: $hat-size;
+		background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/hat-icon.svg');
+		background-position: $hat-position;
+		background-repeat: no-repeat;
+		transform: $hat-transform;
+		display: block;
 	}
 
 	* {
@@ -84,10 +98,14 @@ $widget-size: 75px;
 
 	&#hopscotch-toolbox-toolbar {
 		background-color: $toolbar-bg;
+		border-top-left-radius: $frame-radius;
+		border-top-right-radius: $frame-radius;
 	}
 
 	&#hopscotch-toolbox-chinbar {
 		background-color: $sandwich-bg;
+		border-bottom-left-radius: $frame-radius;
+		border-bottom-right-radius: $frame-radius;
 		& .hopscotch-toolbox-button {
 			background-color: $chinbar-button-inactive-color;
 			&.hopscotch-toolbox-active, &:hover {

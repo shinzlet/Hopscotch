@@ -92,20 +92,26 @@ function createNode(parent, data) {
 let root = createNode(undefined, {name: 'root', path: 'n/a'});
 
 /*
-	tabBindings:
+	tabs:
 		An object binding each active tab ID to it's corresponding node on the tree.
 		This is used as an anchor set to tie different tabs to their locations on the tree.
+
+		'tabs' may also contain various tab flags relating to user experience.
 */
-let tabBindings = {};
+let tabs = {};
 
-chrome.tabs.onCreated.addListener((details) => {
+chrome.tabs.onCreated.addListener(details => {
 	console.log(details);
 });
 
-chrome.webNavigation.onBeforeNavigate.addListener((details) => {
+chrome.tabs.onRemoved.addListener(details => {
 	console.log(details);
 });
 
-chrome.webNavigation.onCommitted.addListener((details) => {
+chrome.webNavigation.onBeforeNavigate.addListener(details => {
+	console.log(details);
+});
+
+chrome.webNavigation.onCommitted.addListener(details => {
 	console.log(details);
 });
