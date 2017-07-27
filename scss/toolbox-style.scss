@@ -49,6 +49,10 @@ $hat-size: 150px;
 $hat-position: center;
 $hat-transform: translateY(70px);
 
+body::-webkit-scrollbar {
+	display: none !important; // This has to be a setting cause it might screw stuff up
+}
+
 #hopscotch-toolbox-frame {
 	z-index: 1000000; // I wish that websites didn't abuse z-index this much
 	width: $frame-width;

@@ -136,7 +136,7 @@ function validate(tabId, callback) {
 	} else if(!tabs[tabId]) {
 		chrome.tabs.get(tabId, tab => {
 			// TODO: Implement setting check and stitching operation
-			let tempRoot = createNode(undefined, ); // We don't know where this is connected, so we can't specify the parent.
+			let tempRoot = createNode(undefined, {name: tab.title, url: tab.url}); // We don't know where this is connected, so we can't specify the parent.
 			createTab(tabId, tempRoot, [flagNames.lost], tempRoot);
 		});
 	}
@@ -184,6 +184,9 @@ chrome.webNavigation.onCommitted.addListener(details => {
 		This is used to trigger events that cannot be done until the page's content has been loaded.
 		For example, the attention widget cannot be pulled up if the page isn't yet loaded, so it
 		must be done here.
+
+		Another use of this is setting node titles. If the DOM isn't loaded, there's no way to know
+		the actual page title, so the url is used as a placeholder. Here, however, the title is present.
 */
 chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 	validate(details.tabId, () => {
@@ -192,6 +195,12 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 				 tabs[details.tabId].flags.indexOf(flagNames.resolveLocation) !== -1) {
 				chrome.tabs.sendMessage(details.tabId, {action: 'launchWidget'});
 			}
+
+
+			chrome.tabs.get(details.tabId, tab => {
+				// Fix the broken title
+				tabs[details.tabId].node.set('name', tab.title);
+			})
 		}
 	});
 });
@@ -221,6 +230,10 @@ let asphalt = (function() {
 
 		chrome.webNavigation.onCommitted.addListener(details => {
 			console.log("OnCommitted Fired: ", details);
+		});
+
+		chrome.webNavigation.onDOMContentLoaded.addListener(details => {
+			console.log("OnDOMContentLoaded Fired: ", details);
 		});
 	};
 
