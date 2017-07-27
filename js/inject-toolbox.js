@@ -108,10 +108,12 @@ let toolbox = (function() {
 		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
 
 		components.toolbar.buttons = panel(components.slices, switchMenu);
-		components.chinbar.buttonNames = ['backstep', 'add', 'remove'];
+		components.chinbar.buttonNames = ['backstep', 'add', 'remove', 'resolve'];
 		components.chinbar.buttons = components.chinbar.buttonNames.map(name => {
 			return button(name, chinbarButtonPressed);
 		});
+		components.chinbar.buttons[components.chinbar.buttonNames.indexOf('resolve')]
+			.classList.toggle(`${hsp}disabled`);
 
 		// Assemble structure
 		components.docfrag.appendChild(components.wrapper);
@@ -153,11 +155,29 @@ let toolbox = (function() {
 	*/
 	function bindToolbox() {
 		bindShortcut({keys: ['AltLeft', 'AltRight'], callback: toggle});
+		bindShortcut({keys: ['Escape'], callback: () => {
+			if(isOpen()) {
+				toggle(false);
+			}
+		}});
 
-		chrome.runtime.onMessage.addListener(function(message) {
-			if(message.action)
-				if(message.action === `pullUpWidget`)
-					toggleWidget(true);
+		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+			console.log("got it");
+			if(message.action) {
+				switch(message.action) {
+					case 'launchWidget':
+						toggleWidget(true);
+						break;
+				}
+			}
+
+			if(message.requirement) {
+				switch(message.requirement) {
+					case 'resolveLocation':
+						// Set flags?
+						break;
+				}
+			}
 		});
 
 		components.widget.addEventListener('click', () => {
@@ -226,6 +246,10 @@ let toolbox = (function() {
 		widgetVisible = state;
 	}
 
+	/*
+		isOpen():
+			Returns the state of the menu.
+	*/
 	function isOpen() {
 		return menuOpen;
 	}
@@ -248,6 +272,7 @@ let toolbox = (function() {
 			activeButtons = ['add', 'remove'];
 		} else if(name === 'browser') {
 			activeButtons = components.chinbar.buttonNames;
+			activeButtons.splice(activeButtons.indexOf('resolve'), 1)
 		}
 
 		components.chinbar.buttonNames.forEach((name, iter) => {

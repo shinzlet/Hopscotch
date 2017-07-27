@@ -14,12 +14,14 @@ $frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
 
-$toolbar-bg: #7476FF;
+$toolbar-bg: linear-gradient(30deg, rgba(45, 203, 255, 1), rgba(196, 255, 41, 1));
+$toolbar-opacity: 1.0;
 $chinbar-bg: #eee;
 $chinbar-button-color: #555;
 $chinbar-button-inactive-color: #333;
 $chinbar-button-disabled-color: #888;
 $chinbar-button-pressed-color: $chinbar-button-inactive-color;
+$chinbar-opacity: $toolbar-opacity;
 $sandwich-bg: #eee;
 $highlight: #fff;
 $button-inactive-color: rgba(255, 255, 255, 0.5);
@@ -42,7 +44,7 @@ $scrollbar-width: 10px;
 $widget-radius: 50%;
 $widget-color: $toolbar-bg;
 
-$widget-size: 150px;
+$widget-size: 35px;
 $hat-size: 150px;
 $hat-position: center;
 $hat-transform: translateY(70px);
@@ -87,8 +89,8 @@ $hat-transform: translateY(70px);
 }
 
 // If the widget is visible and so is the menu, move the frame down.
-#hopscotch-toolbox-attention-widget.hopscotch-toolbox-active + #hopscotch-toolbox-frame {
-	background-color: red;
+#hopscotch-toolbox-attention-widget.hopscotch-toolbox-active + #hopscotch-toolbox-frame.hopscotch-toolbox-active {
+	background: red;
 	transform: translateY($widget-size + $frame-edge-spacing / 2);
 }
 
@@ -97,27 +99,29 @@ $hat-transform: translateY(70px);
 	height: $bar-height;
 
 	&#hopscotch-toolbox-toolbar {
-		background-color: $toolbar-bg;
+		background: $toolbar-bg;
+		opacity: $toolbar-opacity;
 		border-top-left-radius: $frame-radius;
 		border-top-right-radius: $frame-radius;
 	}
 
 	&#hopscotch-toolbox-chinbar {
-		background-color: $sandwich-bg;
+		background: $sandwich-bg;
+		opacity: $chinbar-opacity;
 		border-bottom-left-radius: $frame-radius;
 		border-bottom-right-radius: $frame-radius;
 		& .hopscotch-toolbox-button {
-			background-color: $chinbar-button-inactive-color;
+			background: $chinbar-button-inactive-color;
 			&.hopscotch-toolbox-active, &:hover {
-				background-color: $chinbar-button-color;
+				background: $chinbar-button-color;
 			}
 
 			&:active {
-				background-color: $chinbar-button-pressed-color;
+				background: $chinbar-button-pressed-color;
 			}
 
 			&.hopscotch-toolbox-disabled {
-				background-color: $chinbar-button-disabled-color;
+				background: $chinbar-button-disabled-color;
 				cursor: default;
 			}
 		}
@@ -127,8 +131,8 @@ $hat-transform: translateY(70px);
 		height: $bar-height;
 		width: $bar-height;
 		float: left;
-		background-color: $button-inactive-color;
-		transition: background-color $snappy-animation-time ease;
+		background: $button-inactive-color;
+		transition: background $snappy-animation-time ease;
 		cursor: pointer;
 
 		-webkit-mask-position: center;
@@ -136,11 +140,11 @@ $hat-transform: translateY(70px);
 		-webkit-mask-repeat: no-repeat;
 
 		&.hopscotch-toolbox-active, &:hover {
-			background-color: $highlight;
+			background: $highlight;
 		}
 
 		&:active {
-			background-color: $toolbar-button-pressed-color;
+			background: $toolbar-button-pressed-color;
 		}
 
 		&.hopscotch-toolbox-button-add {
@@ -163,6 +167,11 @@ $hat-transform: translateY(70px);
 			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/backstep-icon.svg');
 		}
 
+		&.hopscotch-toolbox-button-resolve {
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/resolve-icon.svg');
+			float: right !important;
+		}
+
 		&.hopscotch-toolbox-button-settings {
 			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/settings-icon.svg');
 			float: right !important;
@@ -172,7 +181,7 @@ $hat-transform: translateY(70px);
 
 #hopscotch-toolbox-sandwich {
 	width: $frame-width;
-	background-color: $sandwich-bg;
+	background: $sandwich-bg;
 	transform: translateX(0px);
 	transition: height $long-animation-time;
 	overflow: hidden;
@@ -210,7 +219,7 @@ $hat-transform: translateY(70px);
 .hopscotch-toolbox-link {
 	width: 100%;
 	height: $link-height;
-	background-color: $link-bg;
+	background: $link-bg;
 	transition: all $snappy-animation-time;
 	overflow: hidden;
 	padding: 0 10px;
@@ -235,12 +244,13 @@ $hat-transform: translateY(70px);
 	}
 
 	&:active {
-		background-color: $link-highlight;
+		background: $link-highlight;
 	}
 }
 
 #hopscotch-toolbox-attention-widget {
 	z-index: 1000000 - 1; // This shouldn't be on top of the menu.
+	cursor: pointer;
 	position: fixed;
 	width: $widget-size;
 	height: $widget-size;
@@ -249,7 +259,7 @@ $hat-transform: translateY(70px);
 	transform: scale(0.0);
 	border-radius: $widget-radius;
 	transition: all $long-animation-time;
-	background-color: $widget-color;
+	background: $widget-color;
 
 	&.hopscotch-toolbox-active {
 		transform: scale(1.0);
@@ -263,7 +273,7 @@ $hat-transform: translateY(70px);
 		-webkit-mask-position: center;
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: 80%;
-		background-color: white;
+		background: white;
 		display: inline-block;
 		shape-rendering: crispEdges;
 	}
