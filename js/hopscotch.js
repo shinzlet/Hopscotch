@@ -300,31 +300,41 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
 
 });
 
+/*
+	Callback is fired when a web navigation process reaches the stage where it is 'committed'
+	(no going back).
+	Functionality:
+		This is where the majority of history tracking takes place. It checks if the navigation
+		is going to an existing node (the current node's parent or child), and prevents duplication
+		(unless the config prohibits it.)
+*/
 chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 			let currentNode = tabs[details.tabId].node;
 			let shouldReturn = false;
 
-			if(currentNode.getParent() && currentNode.getParent().get('url') === details.url) {
-				pointTab(details.tabId, currentNode.getParent());
-				return;
-			}
-
-			currentNode.getChildren().forEach(child => {
-				if(child.get('url') === details.url) {
-					pointTab(details.tabId, child);
-					shouldReturn = true;
+			if(config.treeSimplification) {
+				if(currentNode.getParent() && currentNode.getParent().get('url') === details.url) {
+					pointTab(details.tabId, currentNode.getParent());
 					return;
 				}
-			});
 
-			if(shouldReturn) return;
+				currentNode.getChildren().forEach(child => {
+					if(child.get('url') === details.url) {
+						pointTab(details.tabId, child);
+						shouldReturn = true;
+						return;
+					}
+				});
+
+				if(shouldReturn) return;
+			}
 
 			qualifiers = details.transitionQualifiers || [];
 
 			let newNode = createNode(currentNode, {name: details.url, url: details.url});
-			tabs[details.tabId].node = newNode;
+			pointTab(details.tabId, newNode);
 		} else {
 			// TODO: Do stuff? Maybe?
 			// Note for future me: I think that this won't be needed if you can
@@ -356,45 +366,69 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 });
 
 /*
+	Callback is fired when a contentscript sends a message of some sort that we need
+	to deal with. This is primarily used to send the tab links, but also to carry out
+	resolutions.
+*/
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	let id = sender.tab.id;
+
+	// I'm not using switch case cause I'm not up for dealing with the dumb scoping
+	if(message.action === 'fetchLinks') {
+		let watchNode = tabs[id].watching;
+		let data = [];
+
+		watchNode.getChildren().forEach(child => {
+			data.push({name: child.get('name'), url: child.get('url')});
+		});
+
+		sendResponse({links: data});
+	} else if(message.action === 'getConfig') {
+		sendResponse(config);
+	}
+});
+
+/*
 	asphalt:
 		A small debugging utility.
 */
 let asphalt = (function() {
 	let allowed = {};
+	let party = false;
 
 	let bindListeners = () => {
 		chrome.tabs.onCreated.addListener(details => {
-			if(allowed['oncreated']) {
+			if(party || allowed['oncreated']) {
 				console.log("Tab Created: ", details);
 			}
 		});
 
 		chrome.tabs.onRemoved.addListener((tabId, details) => {
-			if(allowed['onremoved']) {
+			if(party || allowed['onremoved']) {
 				console.log("Tab Removed: ", tabId, details);
 			}
 		});
 
 		chrome.tabs.onUpdated.addListener((tabId, details) => {
-			if(allowed['onupdated']) {
+			if(party || allowed['onupdated']) {
 			console.log("Tab Updated: ", tabId, details);
 		}
 		});
 
 		chrome.webNavigation.onBeforeNavigate.addListener(details => {
-			if(allowed['onbeforenavigate']) {
+			if(party || allowed['onbeforenavigate']) {
 				console.log("OnBeforeNavigate Fired: ", details);
 			}
 		});
 
 		chrome.webNavigation.onCommitted.addListener(details => {
-			if(allowed['oncommitted']) {
+			if(party || allowed['oncommitted']) {
 				console.log("OnCommitted Fired: ", details);
 			}
 		});
 
 		chrome.webNavigation.onDOMContentLoaded.addListener(details => {
-			if(allowed['ondomcontentloaded']) {
+			if(party || allowed['ondomcontentloaded']) {
 				console.log("OnDOMContentLoaded Fired: ", details);
 			}
 		});
@@ -410,6 +444,7 @@ let asphalt = (function() {
 
 	let shh = () => {
 		allowed = {};
+		party = false;
 	};
 
 	let printTree = node => {
@@ -422,13 +457,18 @@ let asphalt = (function() {
 				printTree(child);
 	  	});
 		}
-	}
+	};
+
+	let startParty = () => {
+		party = true;
+	};
 
 	return {
 		start: bindListeners,
 		allow: allow,
 		stop: stop,
 		shh: shh,
-		printTree: printTree
+		printTree: printTree,
+		party: startParty
 	};
 })();

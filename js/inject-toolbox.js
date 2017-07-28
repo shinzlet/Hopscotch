@@ -162,18 +162,15 @@ let toolbox = (function() {
 		}});
 
 		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-			if(message.action) {
-				switch(message.action) {
-					case 'launchWidget':
-						toggleWidget(true);
-						break;
-				}
+			switch(message.action) {
+				case 'launchWidget':
+					toggleWidget(true);
+					break;
 			}
 
 			if(message.requirement) {
 				switch(message.requirement) {
 					case 'resolveLocation':
-						// Set flags?
 						break;
 				}
 			}
@@ -215,8 +212,18 @@ let toolbox = (function() {
 			return elem;
 		};
 
-		chrome.runtime.sendMessage({action: ''}, reply => {
+		chrome.runtime.sendMessage({action: 'fetchLinks'}, reply => {
+			let fragment = document.createDocumentFragment();
 
+			reply.links.forEach(elem => {
+				fragment.appendChild(link(elem.name, elem.url));
+			});
+
+			while(components.browser.firstChild) {
+				components.browser.removeChild(components.browser.firstChild);
+			}
+
+			components.browser.appendChild(fragment);
 		});
 	}
 
@@ -290,12 +297,30 @@ let toolbox = (function() {
 
 	}
 
+	/*
+		getConfig(callback):
+			Contacts the background script and requests the config information.
+	*/
+	function getConfig(callback) {
+		chrome.runtime.sendMessage({action: 'getConfig'}, callback);
+	}
+
+	/*
+		onConfigLoaded(config):
+			callback for getConfig.
+	*/
+	function onConfigLoaded(config) {
+		if(config.scrollbarHiding)
+			document.body.classList.toggle(`${hsp}remove-scrollbar`, true);
+	}
+
 	return {
 		start: function() {
 			buildFrame();
 			loadLinks(); // This will run asynchronously.
 			injectToolbox();
 			bindToolbox();
+			getConfig(onConfigLoaded);
 		},
 
 		toggle: toggle,

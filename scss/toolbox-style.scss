@@ -49,7 +49,7 @@ $hat-size: 150px;
 $hat-position: center;
 $hat-transform: translateY(70px);
 
-body::-webkit-scrollbar {
+body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 	display: none !important; // This has to be a setting cause it might screw stuff up
 }
 
