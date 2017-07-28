@@ -2,18 +2,16 @@
 	createNode(parent, data):
 		Returns an object containing exposed node functions. Each node has a data object
 		containing any relevant information to the node. This allows future expansion
-		of what properties are recorded on each page.
+		of what properties are recorded on each page. noAppend is an optional boolean
+		that when set to true will prevent this node from being appened to the specified
+		parent.
 
 		As of now, 'data' should contain a node's name and path.
 		E.g. {name: 'title', path: 'https://google.com'}
 */
-function createNode(parent, data) {
+function createNode(parent, data, noAppend) {
 	let rootDistance = 0;
 	let children = [];
-
-	if(parent) {
-		rootDistance = parent.getRootDistance() + 1;
-	}
 
 	if(!data) data = {};
 
@@ -74,7 +72,7 @@ function createNode(parent, data) {
 		data[key] = value;
 	};
 
-	return {
+	let node = {
 		appendChild: appendChild,
 		getParent: getParent,
 		getChildren: getChildren,
@@ -83,6 +81,13 @@ function createNode(parent, data) {
 		getData: getData,
 		set: set
 	};
+
+	if(parent) {
+		rootDistance = parent.getRootDistance() + 1;
+		if(!noAppend) parent.appendChild(node);
+	}
+
+	return node;
 }
 
 /*
@@ -149,9 +154,17 @@ function validate(tabId, callback) {
 let configReady = false;
 
 /*
+	tabQueue:
+		This variable will contain a length 2 array storing the current active tab,
+		and the last active tab. This information is used if hopscotch's config is
+		set to attach new tabs as nodes onto the last active tab.
+*/
+let tabQueue = undefined;
+
+/*
 	config:
 		An object containing config kv pairs. Comes preloaded with default data. In the event
-		that the config cannot load, these will be defaulted to.
+		that the config cannot (or takes absurdly long to) load, these will be defaulted to.
 */
 let config = {
 	"scrollbarHiding": false,
@@ -160,6 +173,9 @@ let config = {
 	"treeSimplification": true
 };
 
+/*
+	This code block loads the config.json and stores it in the variable 'config'.
+*/
 {
 	let request = new XMLHttpRequest();
 
@@ -185,11 +201,31 @@ let config = {
 /*
 	Callback is fired when a tab is created.
 	Functionality:
-		If the user has specified that all new tabs should be appended to the tree's root,
-		create a branch for this new tab.
+		If the user has specified that all new tabs should be appended to the tree's root ('newBranch'),
+		create a branch for this new tab. If the setting is 'subBranch', append the new tab's root onto
+		the active node of the tab that invoked it's creation. If the user has specified to prompt them
+		about this action, create a lost tab.
 */
 chrome.tabs.onCreated.addListener(tab => {
-
+	let newNode = {};
+	switch(config.newTabAction) {
+		case 'newBranch':
+			newNode = createNode(root, {name: tab.title, url: tab.url});
+			createTab(tab.id, newNode);
+			break;
+		case 'subBranch':
+			chrome.tabs.get(tab.openerTabId || tab.tabId, opener => {
+				validate(opener.id, () => {
+					newNode = createNode(tabs[opener.id].node, {name: tab.title, url: tab.url});
+					createTab(tab.id, newNode);
+				});
+			});
+			break;
+		case 'prompt':
+			newNode = createNode(undefined, {name: tab.title, url: tab.url});
+			createTab(tab.tabId, newNode, [flagNames.lost], newNode);
+			break;
+	}
 });
 
 /*
@@ -204,6 +240,12 @@ chrome.tabs.onRemoved.addListener((tabId, details) => {
 	}
 });
 
+/*
+	Callback is fired when a tab's data is updated.
+	Functionality:
+		This is primarily used to change the names of nodes whose titles
+		have not been set or have been changed.
+*/
 chrome.tabs.onUpdated.addListener((tabId, details) => {
 	if(details.title) {
 		tabs[tabId].node.set('name', details.title);
@@ -223,7 +265,6 @@ chrome.webNavigation.onCommitted.addListener(details => {
 			}
 			let tab = tabs[details.tabId];
 			let node = createNode(tab.node, {name: details.url, url: details.url});
-			tabs[details.tabId].node.appendChild(node); // Attach the node
 			tabs[details.tabId].node = node; // Anchor the tab to this node
 		} else {
 
@@ -251,37 +292,65 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 
 /*
 	asphalt:
-		A small debugging utility. By executing ashphalt.start, useful information
-		will start printing when events are fired.
+		A small debugging utility.
 */
 let asphalt = (function() {
+	let allowed = {};
+
 	let bindListeners = () => {
 		chrome.tabs.onCreated.addListener(details => {
-			console.log("Tab Created: ", details);
+			if(allowed['oncreated']) {
+				console.log("Tab Created: ", details);
+			}
 		});
 
 		chrome.tabs.onRemoved.addListener((tabId, details) => {
-			console.log("Tab Removed: ", tabId, details);
+			if(allowed['onremoved']) {
+				console.log("Tab Removed: ", tabId, details);
+			}
 		});
 
 		chrome.tabs.onUpdated.addListener((tabId, details) => {
+			if(allowed['onupdated']) {
 			console.log("Tab Updated: ", tabId, details);
+		}
 		});
 
 		chrome.webNavigation.onBeforeNavigate.addListener(details => {
-			console.log("OnBeforeNavigate Fired: ", details);
+			if(allowed['onbeforenavigate']) {
+				console.log("OnBeforeNavigate Fired: ", details);
+			}
 		});
 
 		chrome.webNavigation.onCommitted.addListener(details => {
-			console.log("OnCommitted Fired: ", details);
+			if(allowed['oncommitted']) {
+				console.log("OnCommitted Fired: ", details);
+			}
 		});
 
 		chrome.webNavigation.onDOMContentLoaded.addListener(details => {
-			console.log("OnDOMContentLoaded Fired: ", details);
+			if(allowed['ondomcontentloaded']) {
+				console.log("OnDOMContentLoaded Fired: ", details);
+			}
 		});
 	};
 
+	let allow = name => {
+		allowed[name.toLowerCase()] = true;
+	};
+
+	let stop = name => {
+		allowed[name.toLowerCase()] = false;
+	};
+
+	let shh = () => {
+		allowed = {};
+	};
+
 	return {
-		start: bindListeners
+		start: bindListeners,
+		allow: allow,
+		stop: stop,
+		shh: shh
 	};
 })();
