@@ -1,4 +1,50 @@
 /*
+	configReady:
+		Will be true after the config file has been successfully loaded.
+*/
+let configReady = false;
+
+/*
+	config:
+		An object containing config kv pairs. Comes preloaded with default data. In the event
+		that the config cannot (or takes absurdly long to) load, these will be defaulted to.
+*/
+let config = {
+	"scrollbarHiding": false,
+	"newTabAction": "newBranch",
+	"attemptStitching": true,
+	"stitchFallback": "newBranch",
+	"treeSimplification": true,
+	"urlTypedAction": "subBranch"
+};
+
+/*
+	This code block loads the config.json and stores it in the variable 'config'.
+*/
+{
+	let request = new XMLHttpRequest();
+
+	request.onreadystatechange = () => {
+	  if (request.readyState === 4 && request.status === 200) {
+			if(request.status === 200) {
+	    	config = JSON.parse(request.responseText);
+				configReady = true;
+			} else {
+				console.log(`config.json could not be loaded. XMLHttpRequest status was ${request.status}`);
+			}
+	  }
+	};
+
+	request.onTimeout = () => {
+		configReady = true;
+	}
+
+	request.open('GET', chrome.runtime.getURL('config.json'));
+	request.send();
+}
+
+
+/*
 	createNode(parent, data):
 		Returns an object containing exposed node functions. Each node has a data object
 		containing any relevant information to the node. This allows future expansion
@@ -131,27 +177,41 @@ function createTab(id, node, flags, root) {
 	validate(tabId, callback):
 		This function checks if the tab is already being tracked. If not, it will attempt
 		to stich it to the existing tree via it's history. If the user has disabled this
-		or the branch cannot be found, a lost branch will be created for this tab until
-		the user completes the resolution. After this process has been completed, the callback
-		will be run.
+		or the branch cannot be found, config will be checked for the stitching fallback.
+		After this process has been completed, the callback will be run.
 */
 function validate(tabId, callback) {
 	if(tabs[tabId]) { // No action needs to be taken; the tab is tracked.
 		callback();
 	} else if(!tabs[tabId]) {
 		chrome.tabs.get(tabId, tab => {
-			// TODO: Implement setting check and stitching operation
-			let tempRoot = createNode(undefined, {name: tab.title, url: tab.url}); // We don't know where this is connected, so we can't specify the parent.
-			createTab(tabId, tempRoot, [flagNames.lost], tempRoot);
+			let stitched = false;
+			if(config.attemptStitching) stitched = stitchToRoot();
+
+			if(!stitched) {
+				switch(config.stitchFallback) {
+					case 'prompt':
+						let tempRoot = createNode(undefined, {name: tab.title, url: tab.url}); // We don't know where this is connected, so we can't specify the parent.
+						createTab(tabId, tempRoot, [flagNames.lost], tempRoot);
+						break;
+					case 'newBranch':
+						let node = createNode(root, {name: tab.title, url: tab.url});
+						createTab(tabId, node);
+						break;
+				}
+			}
 		});
 	}
 }
 
 /*
-	configReady:
-		Will be true after the config file has been successfully loaded.
+	stitchToRoot(handle):
+		This function takes the root node of a lost tree and attempts to stitch it onto
+		a possible parent node on the main tree. Returns the operation's success as a boolean.
 */
-let configReady = false;
+function stitchToRoot(handle) {
+	return false;
+}
 
 /*
 	tabQueue:
@@ -160,43 +220,6 @@ let configReady = false;
 		set to attach new tabs as nodes onto the last active tab.
 */
 let tabQueue = undefined;
-
-/*
-	config:
-		An object containing config kv pairs. Comes preloaded with default data. In the event
-		that the config cannot (or takes absurdly long to) load, these will be defaulted to.
-*/
-let config = {
-	"scrollbarHiding": false,
-	"newTabAction": "newBranch",
-	"attemptStitching": true,
-	"treeSimplification": true
-};
-
-/*
-	This code block loads the config.json and stores it in the variable 'config'.
-*/
-{
-	let request = new XMLHttpRequest();
-
-	request.onreadystatechange = () => {
-	  if (request.readyState === 4 && request.status === 200) {
-			if(request.status === 200) {
-	    	config = JSON.parse(request.responseText);
-				configReady = true;
-			} else {
-				console.log(`config.json could not be loaded. XMLHttpRequest status was ${request.status}`);
-			}
-	  }
-	};
-
-	request.onTimeout = () => {
-		configReady = true;
-	}
-
-	request.open('GET', chrome.runtime.getURL('config.json'));
-	request.send();
-}
 
 /*
 	Callback is fired when a tab is created.
@@ -259,15 +282,25 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
 chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
-			switch(details.transitionType) {
-				case 'link':
-					break;
-			}
-			let tab = tabs[details.tabId];
-			let node = createNode(tab.node, {name: details.url, url: details.url});
-			tabs[details.tabId].node = node; // Anchor the tab to this node
-		} else {
+			let currentNode = tabs[details.tabId].node;
 
+			if(currentNode.getParent() && currentNode.getParent().get('url') === details.url) {
+				tabs[details.tabId].node = currentNode.getParent();
+			}
+
+			currentNode.getChildren().forEach(child => {
+				if(child.get('url') === details.url) {
+					tabs[details.tabId] = child;
+					return;
+				}
+			});
+
+
+		} else {
+			// TODO: Do stuff? Maybe?
+			// Note for future me: I think that this won't be needed if you can
+			// get onUpdated to capture in-page reloads (like on google when you type
+			// a query and it does some sneaky stuff that doesn't fire onCommitted)
 		}
 	});
 });
@@ -332,7 +365,7 @@ let asphalt = (function() {
 			if(allowed['ondomcontentloaded']) {
 				console.log("OnDOMContentLoaded Fired: ", details);
 			}
-		})
+		});
 	};
 
 	let allow = name => {
@@ -347,10 +380,23 @@ let asphalt = (function() {
 		allowed = {};
 	};
 
+	let printTree = node => {
+		let pname = "(root)";
+		if(node.getParent()) pname = node.getParent().get('name');
+		console.log(`${pname} -> ${node.get('name')}`);
+
+		if(node.getChildren()) {
+			node.getChildren().forEach(child => {
+				printTree(child);
+	  	});
+		}
+	}
+
 	return {
 		start: bindListeners,
 		allow: allow,
 		stop: stop,
-		shh: shh
+		shh: shh,
+		printTree: printTree
 	};
 })();

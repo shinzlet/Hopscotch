@@ -2,5 +2,7 @@
 	"scrollbarHiding": false,
 	"newTabAction": "newBranch",
 	"attemptStitching": true,
-	"treeSimplification": true
+	"stitchFallback": "newBranch",
+	"treeSimplification": true,
+	"urlTypedAction": "subBranch"
 }
