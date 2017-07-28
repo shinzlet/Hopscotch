@@ -162,7 +162,6 @@ let toolbox = (function() {
 		}});
 
 		chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-			console.log("got it");
 			if(message.action) {
 				switch(message.action) {
 					case 'launchWidget':
@@ -216,7 +215,9 @@ let toolbox = (function() {
 			return elem;
 		};
 
+		chrome.runtime.sendMessage({action: ''}, reply => {
 
+		});
 	}
 
 	/*

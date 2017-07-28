@@ -1,8 +1,9 @@
 {
 	"scrollbarHiding": false,
-	"newTabAction": "newBranch",
+	"newTabAction": "subBranch",
 	"attemptStitching": true,
 	"stitchFallback": "newBranch",
 	"treeSimplification": true,
-	"urlTypedAction": "subBranch"
+	"urlTypedAction": "subBranch",
+	"browserNavigation": "sticky"
 }

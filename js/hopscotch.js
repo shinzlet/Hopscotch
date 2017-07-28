@@ -15,7 +15,8 @@ let config = {
 	"attemptStitching": true,
 	"stitchFallback": "newBranch",
 	"treeSimplification": true,
-	"urlTypedAction": "subBranch"
+	"urlTypedAction": "subBranch",
+	"browserNavigation": "tracked"
 };
 
 /*
@@ -170,7 +171,25 @@ let flagNames = {lost: 'lost'};
 		the browsing done in it will not be discarded (unless the tab is closed).
 */
 function createTab(id, node, flags, root) {
-	tabs[id] = {node: node, flags: flags, root: root};
+	tabs[id] = {node: node, watching: node, flags: flags, root: root};
+}
+
+/*
+	pointTab(id, location):
+		This function changes where a tab by an id is pointing. This is called, for example,
+		when a link is pressed and the tab is now somewhere else. This function must be used
+		as opposed to simply reassigning tab.node, because that will cause the behaviour of
+		browserNavigation: sticky, even if the user specified tracked.
+*/
+function pointTab(id, location) {
+	// 'tracked' means to keep the browser current with where the user has navigated,
+	// while sticky means that the browser will just continue showing the user where they
+	// last navigated.
+
+	tabs[id].node = location;
+	if(config.browserNavigation === 'tracked') {
+		tabs[id].watching = location;
+	}
 }
 
 /*
@@ -239,8 +258,10 @@ chrome.tabs.onCreated.addListener(tab => {
 		case 'subBranch':
 			chrome.tabs.get(tab.openerTabId || tab.tabId, opener => {
 				validate(opener.id, () => {
-					newNode = createNode(tabs[opener.id].node, {name: tab.title, url: tab.url});
-					createTab(tab.id, newNode);
+					// This event happens before onCommitted will be called, so by pointing
+					// this tab to it's invoker's node, onCommitted will still point this
+					// to the right node, but it'll avoid node duplication.
+					createTab(tab.id, tabs[opener.id].node);
 				});
 			});
 			break;
@@ -283,19 +304,27 @@ chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 			let currentNode = tabs[details.tabId].node;
+			let shouldReturn = false;
 
 			if(currentNode.getParent() && currentNode.getParent().get('url') === details.url) {
-				tabs[details.tabId].node = currentNode.getParent();
+				pointTab(details.tabId, currentNode.getParent());
+				return;
 			}
 
 			currentNode.getChildren().forEach(child => {
 				if(child.get('url') === details.url) {
-					tabs[details.tabId] = child;
+					pointTab(details.tabId, child);
+					shouldReturn = true;
 					return;
 				}
 			});
 
+			if(shouldReturn) return;
 
+			qualifiers = details.transitionQualifiers || [];
+
+			let newNode = createNode(currentNode, {name: details.url, url: details.url});
+			tabs[details.tabId].node = newNode;
 		} else {
 			// TODO: Do stuff? Maybe?
 			// Note for future me: I think that this won't be needed if you can
@@ -317,7 +346,10 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 		if(details.frameId === 0) {
 			if(tabs[details.tabId].flags &&
 				 tabs[details.tabId].flags.indexOf(flagNames.lost) !== -1) {
-				chrome.tabs.sendMessage(details.tabId, {action: 'launchWidget'});
+				chrome.tabs.sendMessage(details.tabId, {
+					action: 'launchWidget',
+					requirement: 'resolveLocation'
+				});
 			}
 		}
 	});
@@ -381,7 +413,7 @@ let asphalt = (function() {
 	};
 
 	let printTree = node => {
-		let pname = "(root)";
+		let pname = "(hopscotch)";
 		if(node.getParent()) pname = node.getParent().get('name');
 		console.log(`${pname} -> ${node.get('name')}`);
 
