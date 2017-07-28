@@ -332,7 +332,7 @@ let asphalt = (function() {
 			if(allowed['ondomcontentloaded']) {
 				console.log("OnDOMContentLoaded Fired: ", details);
 			}
-		});
+		})
 	};
 
 	let allow = name => {
