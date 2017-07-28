@@ -94,7 +94,6 @@ body::-webkit-scrollbar {
 
 // If the widget is visible and so is the menu, move the frame down.
 #hopscotch-toolbox-attention-widget.hopscotch-toolbox-active + #hopscotch-toolbox-frame.hopscotch-toolbox-active {
-	background: red;
 	transform: translateY($widget-size + $frame-edge-spacing / 2);
 }
 

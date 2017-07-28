@@ -97,7 +97,7 @@ let root = createNode(undefined, {name: 'root', path: 'n/a'});
 		This is used as an anchor set to tie different tabs to their locations on the tree.
 
 		'tabs' may also contain various tab flags relating to user experience.
-		E.g. 1135: {node: object, flags: ['resolveLocation']}
+		E.g. 1135: {node: object, flags: ['lost']}
 			   tabId  pointer
 */
 let tabs = {};
@@ -106,7 +106,7 @@ let tabs = {};
 	flagNames:
 		An object containing the names of various possible tab flags.
 */
-let flagNames = {resolveLocation: 'resolveLocation', lost: 'lost'};
+let flagNames = {lost: 'lost'};
 
 /*
 	createTab(id, node, flags, tree):
@@ -143,6 +143,46 @@ function validate(tabId, callback) {
 }
 
 /*
+	configReady:
+		Will be true after the config file has been successfully loaded.
+*/
+let configReady = false;
+
+/*
+	config:
+		An object containing config kv pairs. Comes preloaded with default data. In the event
+		that the config cannot load, these will be defaulted to.
+*/
+let config = {
+	"scrollbarHiding": false,
+	"newTabAction": "newBranch",
+	"attemptStitching": true,
+	"treeSimplification": true
+};
+
+{
+	let request = new XMLHttpRequest();
+
+	request.onreadystatechange = () => {
+	  if (request.readyState === 4 && request.status === 200) {
+			if(request.status === 200) {
+	    	config = JSON.parse(request.responseText);
+				configReady = true;
+			} else {
+				console.log(`config.json could not be loaded. XMLHttpRequest status was ${request.status}`);
+			}
+	  }
+	};
+
+	request.onTimeout = () => {
+		configReady = true;
+	}
+
+	request.open('GET', chrome.runtime.getURL('config.json'));
+	request.send();
+}
+
+/*
 	Callback is fired when a tab is created.
 	Functionality:
 		If the user has specified that all new tabs should be appended to the tree's root,
@@ -165,7 +205,9 @@ chrome.tabs.onRemoved.addListener((tabId, details) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, details) => {
-
+	if(details.title) {
+		tabs[tabId].node.set('name', details.title);
+	}
 });
 
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
@@ -174,7 +216,18 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
 
 chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
+		if(details.frameId === 0) {
+			switch(details.transitionType) {
+				case 'link':
+					break;
+			}
+			let tab = tabs[details.tabId];
+			let node = createNode(tab.node, {name: details.url, url: details.url});
+			tabs[details.tabId].node.appendChild(node); // Attach the node
+			tabs[details.tabId].node = node; // Anchor the tab to this node
+		} else {
 
+		}
 	});
 });
 
@@ -184,23 +237,14 @@ chrome.webNavigation.onCommitted.addListener(details => {
 		This is used to trigger events that cannot be done until the page's content has been loaded.
 		For example, the attention widget cannot be pulled up if the page isn't yet loaded, so it
 		must be done here.
-
-		Another use of this is setting node titles. If the DOM isn't loaded, there's no way to know
-		the actual page title, so the url is used as a placeholder. Here, however, the title is present.
 */
 chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 			if(tabs[details.tabId].flags &&
-				 tabs[details.tabId].flags.indexOf(flagNames.resolveLocation) !== -1) {
+				 tabs[details.tabId].flags.indexOf(flagNames.lost) !== -1) {
 				chrome.tabs.sendMessage(details.tabId, {action: 'launchWidget'});
 			}
-
-
-			chrome.tabs.get(details.tabId, tab => {
-				// Fix the broken title
-				tabs[details.tabId].node.set('name', tab.title);
-			})
 		}
 	});
 });
