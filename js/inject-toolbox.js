@@ -206,8 +206,8 @@ let toolbox = (function() {
 			elem.appendChild(createElement('p').setTextContent(name));
 			elem.appendChild(createElement('p').setTextContent(url));
 
-			elem.addEventListener('click', () => {
-				toggle();
+			elem.addEventListener('click', event => {
+				console.log(event);toggle();
 			});
 			return elem;
 		};
@@ -294,7 +294,9 @@ let toolbox = (function() {
 			Provides a button handler callback for the chinbar.
 	*/
 	function chinbarButtonPressed(name) {
+		switch(name) {
 
+		}
 	}
 
 	/*

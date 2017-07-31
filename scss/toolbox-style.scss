@@ -17,7 +17,7 @@ $frame-edge-spacing: 50px;
 $toolbar-bg: linear-gradient(30deg, #FF5D00, #FF9A00);
 $toolbar-opacity: 1.0;
 $chinbar-bg: #222;
-$chinbar-button-highlight: rgba(255, 93, 0, 1);
+$chinbar-button-highlight: #fff;
 $chinbar-button-color: #555;
 $chinbar-button-disabled-color: rgba(255, 255, 255, 0.1);
 $chinbar-opacity: $toolbar-opacity;
@@ -29,12 +29,12 @@ $long-animation-time: 200ms;
 $snappy-animation-time: 100ms;
 
 $bar-height: 40px;
-$link-height: $bar-height;
+$link-min-height: $bar-height;
 $link-count: 4.5;
 $link-bg: rgba(0, 0, 0, 0);
 $link-highlight: rgba(0, 0, 0, 0.2);
 $link-url-color: #555;
-$link-name-color: black;
+$link-name-color: #FF5D00;
 
 $scrollbar-radius: 0px;
 $scrollbar-color: $link-highlight;
@@ -197,13 +197,13 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 
 		&:not(.hopscotch-toolbox-active) {
 			transform: translateX($frame-width);
-			max-height: $link-height !important;
-			margin-top: -$link-height;
+			max-height: $link-min-height !important;
+			margin-top: -$link-min-height;
 		}
 
 		&.hopscotch-toolbox-browser {
-			max-height: $link-height * $link-count;
-			min-height: $link-height;
+			max-height: $link-min-height * $link-count;
+			min-height: $link-min-height;
 			overflow-y: scroll;
 
 			&:empty {
@@ -212,40 +212,39 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		}
 
 		&.hopscotch-toolbox-settings {
-			min-height: $link-height;
-			max-height: $link-height * $link-count;
+			min-height: $link-min-height;
+			max-height: $link-min-height * $link-count;
 		}
 	}
 }
 
 .hopscotch-toolbox-link {
 	width: 100%;
-	height: $link-height;
+	min-height: $link-min-height;
 	background: $link-bg;
 	transition: all $snappy-animation-time;
 	overflow: hidden;
-	padding: 0 10px;
+	padding: 10px;
+	box-sizing: border-box;
 
 	p {
 		transition: all $snappy-animation-time;
+
 		&:nth-child(1) {
 			font-weight: bold;
-			color: $link-name-color;
+			background: $toolbar-bg;
+			-webkit-text-fill-color: transparent;
+			-webkit-background-clip: text;
 		}
 
 		&:nth-child(2) {
 			color: $link-url-color;
+			word-break: break-all;
 		}
 	}
 
 	&:hover {
 		cursor: pointer;
-		p {
-			transform: translateX(10px);
-		}
-	}
-
-	&:active {
 		background: $link-highlight;
 	}
 }
