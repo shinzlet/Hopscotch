@@ -13,8 +13,9 @@
 $frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
+$frame-bg: linear-gradient(30deg, #FCFF00, #FFCD00);
 
-$toolbar-bg: linear-gradient(30deg, #FF5D00, #FF9A00);
+$toolbar-bg: transparent;
 $toolbar-opacity: 1.0;
 $chinbar-bg: #222;
 $chinbar-button-highlight: #fff;
@@ -34,34 +35,44 @@ $link-count: 4.5;
 $link-bg: rgba(0, 0, 0, 0);
 $link-highlight: rgba(0, 0, 0, 0.2);
 $link-url-color: #555;
-$link-name-color: #FF5D00;
+$link-name-color: #FCFF00;
+$link-line-height: 18px;
+$link-font-size: 14px;
 
 $scrollbar-radius: 0px;
 $scrollbar-color: $link-highlight;
 $scrollbar-width: 10px;
 
 $widget-radius: 50%;
-$widget-color: $toolbar-bg;
+$widget-color: $frame-bg;
 
 $widget-size: 35px;
 $hat-size: 150px;
 $hat-position: center;
 $hat-transform: translateY(70px);
 
+$enormous-number: 10000000000000;
+
 body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
-	display: none !important; // This has to be a setting cause it might screw stuff up
+	display: none !important; // This has to be a setting cause 	it might screw stuff up
 }
 
 #hopscotch-toolbox-frame {
-	z-index: 1000000; // I wish that websites didn't abuse z-index this much
+	z-index: $enormous-number; // I wish that websites didn't abuse z-index this much
+	// My z-index hate list (and what the highest z-index i found was):
+	// Stackoverflow (z-index: 1050)
+	// The Washington Post (z-index: 536870905)
 	width: $frame-width;
 	position: fixed;
 	top: $frame-edge-spacing;
 	left: $frame-edge-spacing;
 	opacity: 0;
+	border-radius: $frame-radius;
 	transform: scale(0);
 	overflow: hidden;
-	transition: all $long-animation-time ease;
+	background: $frame-bg;
+	transition: all $long-animation-time ease, opacity $snappy-animation-time linear;
+	-webkit-user-select: none;
 
 	&.hopscotch-toolbox-active {
 		transform: scale(1);
@@ -187,6 +198,7 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 	transform: translateX(0px);
 	transition: height $long-animation-time;
 	overflow: hidden;
+	border-radius: $frame-radius $frame-radius 0 0;
 
 	.hopscotch-toolbox-slice {
 		width: $frame-width;
@@ -226,13 +238,16 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 	overflow: hidden;
 	padding: 10px;
 	box-sizing: border-box;
+	text-align: center;
 
 	p {
+		font-size: $link-font-size;
+		line-height: $link-line-height;
 		transition: all $snappy-animation-time;
 
 		&:nth-child(1) {
 			font-weight: bold;
-			background: $toolbar-bg;
+			background: $frame-bg;
 			-webkit-text-fill-color: transparent;
 			-webkit-background-clip: text;
 		}
@@ -247,10 +262,21 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		cursor: pointer;
 		background: $link-highlight;
 	}
+
+	&.hopscotch-toolbox-active::before {
+		content: '';
+		z-index: 1000000000;
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: $frame-bg;
+		display: block;
+		float: left;
+	}
 }
 
 #hopscotch-toolbox-attention-widget {
-	z-index: 1000000 - 1; // This shouldn't be on top of the menu.
+	z-index: $enormous-number - 1; // This shouldn't be on top of the menu.
 	cursor: pointer;
 	position: fixed;
 	width: $widget-size;

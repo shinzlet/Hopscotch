@@ -158,7 +158,7 @@ let tabs = {};
 	flagNames:
 		An object containing the names of various possible tab flags.
 */
-let flagNames = {lost: 'lost'};
+let flagNames = {lost: 'lost', stall: 'stall'};
 
 /*
 	createTab(id, node, flags, tree):
@@ -202,7 +202,7 @@ function pointTab(id, location) {
 function validate(tabId, callback) {
 	if(tabs[tabId]) { // No action needs to be taken; the tab is tracked.
 		callback();
-	} else if(!tabs[tabId]) {
+	} else {
 		chrome.tabs.get(tabId, tab => {
 			let stitched = false;
 			if(config.attemptStitching) stitched = stitchToRoot();
@@ -219,6 +219,7 @@ function validate(tabId, callback) {
 						break;
 				}
 			}
+			callback();
 		});
 	}
 }
@@ -256,7 +257,7 @@ chrome.tabs.onCreated.addListener(tab => {
 			createTab(tab.id, newNode);
 			break;
 		case 'subBranch':
-			chrome.tabs.get(tab.openerTabId || tab.tabId, opener => {
+			chrome.tabs.get(tab.openerTabId || tab.id, opener => {
 				validate(opener.id, () => {
 					// This event happens before onCommitted will be called, so by pointing
 					// this tab to it's invoker's node, onCommitted will still point this
@@ -267,7 +268,7 @@ chrome.tabs.onCreated.addListener(tab => {
 			break;
 		case 'prompt':
 			newNode = createNode(undefined, {name: tab.title, url: tab.url});
-			createTab(tab.tabId, newNode, [flagNames.lost], newNode);
+			createTab(tab.id, newNode, [flagNames.lost, flagNames.stall], newNode);
 			break;
 	}
 });
@@ -291,7 +292,7 @@ chrome.tabs.onRemoved.addListener((tabId, details) => {
 		have not been set or have been changed.
 */
 chrome.tabs.onUpdated.addListener((tabId, details) => {
-	if(details.title) {
+	if(details.title && tabs[tabId]) {
 		tabs[tabId].node.set('name', details.title);
 	}
 });
@@ -311,11 +312,35 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
 chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
+			// If the stall flag is present, we need to delete the flag and return.
+			let stallIndex = (tabs[details.tabId].flags || []).indexOf(flagNames.stall);
+			if(stallIndex !== -1) {
+				tabs[details.tabId].flags.splice(stallIndex, 1);
+				return;
+			}
 
-			if(details.transitionQualifiers && details.transitionQualifiers.indexOf('forward_back') === -1) {
+			if((details.transitionQualifiers || []).indexOf('forward_back') === -1) {
 				// forward_back events sometimes say they are a reload even though they are real navigation
 				if(details.transitionType === 'reload') {
-					return false;
+					// If this is just a reload of an existing page, we don't care. If it wasn't being
+					// tracked, though, we don't want to return yet.
+					if(tabs[details.tabId].node.get('url') === details.url)
+						return;
+				}
+			}
+
+			if(details.transitionType === 'typed') {
+				let newNode = {};
+				switch(config.urlTypedAction) {
+					case 'prompt': // It's easiest just to reassign the tab to a new tree.
+						newNode = createNode(undefined, {name: details.url, url: details.url});
+						createTab(details.tabId, newNode, [flagNames.lost], newNode);
+						break;
+					case 'subBranch':
+						return; // This is the default behaviour.
+					case 'newBranch':
+						newNode = createNode(root, {name: details.url, url: details.url});
+						break;
 				}
 			}
 
@@ -381,19 +406,44 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	let id = sender.tab.id;
 
-	// I'm not using switch case cause I'm not up for dealing with the dumb scoping
-	if(message.action === 'fetchLinks') {
-		let watchNode = tabs[id].watching;
-		let data = [];
+	validate(id, () => {
+		// I'm not using switch case cause I'm not up for dealing with the dumb scoping
+		if(message.action === 'fetchLinks') {
+			let watchNode = tabs[id].watching;
+			let data = [];
 
-		watchNode.getChildren().forEach(child => {
-			data.push({name: child.get('name'), url: child.get('url')});
-		});
+			watchNode.getChildren().forEach(child => {
+				data.push({name: child.get('name'), url: child.get('url')});
+			});
 
-		sendResponse({links: data});
-	} else if(message.action === 'getConfig') {
-		sendResponse(config);
-	}
+			sendResponse({links: data, canRecede: (watchNode.getParent() !== undefined)});
+		} else if(message.action === 'getConfig') {
+			sendResponse(config);
+		} else if(message.action === 'backstep') {
+			let watchNode = tabs[id].watching;
+			if(watchNode.getParent()) {
+				tabs[id].watching = watchNode.getParent();
+			}
+			sendResponse({success: (watchNode.getParent() !== undefined)});
+		} else if(message.action === 'stepinto') {
+			tabs[id].watching.getChildren().forEach(node => {
+				if(node.get('url') === message.handle) {
+					tabs[id].watching = node;
+					return;
+				}
+			});
+		} else if(message.action === 'navigate') {
+			let watchNode = tabs[id].watching;
+			watchNode.getChildren().forEach(child => {
+				if(child.get('url') === message.handle) {
+					pointTab(id, child);
+					(tabs[id].flags || (tabs[id].flags = [])).push(flagNames.stall);
+					chrome.tabs.update(id, {url: child.get('url')});
+					return;
+				}
+			});
+		}
+	});
 });
 
 /*
@@ -401,57 +451,63 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		A small debugging utility.
 */
 let asphalt = (function() {
-	let allowed = {};
+	let allowed = [];
 	let party = false;
 
 	let bindListeners = () => {
 		chrome.tabs.onCreated.addListener(details => {
-			if(party || allowed['oncreated']) {
+			if(party || isAllowed('oncreated')) {
 				console.log("Tab Created: ", details);
 			}
 		});
 
 		chrome.tabs.onRemoved.addListener((tabId, details) => {
-			if(party || allowed['onremoved']) {
+			if(party || isAllowed('onremoved')) {
 				console.log("Tab Removed: ", tabId, details);
 			}
 		});
 
 		chrome.tabs.onUpdated.addListener((tabId, details) => {
-			if(party || allowed['onupdated']) {
+			if(party || isAllowed('onupdated')) {
 			console.log("Tab Updated: ", tabId, details);
 		}
 		});
 
 		chrome.webNavigation.onBeforeNavigate.addListener(details => {
-			if(party || allowed['onbeforenavigate']) {
+			if(party || isAllowed('onbeforenavigate')) {
 				console.log("OnBeforeNavigate Fired: ", details);
 			}
 		});
 
 		chrome.webNavigation.onCommitted.addListener(details => {
-			if(party || allowed['oncommitted']) {
+			if(party || isAllowed('oncommitted')) {
 				console.log("OnCommitted Fired: ", details);
 			}
 		});
 
 		chrome.webNavigation.onDOMContentLoaded.addListener(details => {
-			if(party || allowed['ondomcontentloaded']) {
+			if(party || isAllowed('ondomcontentloaded')) {
 				console.log("OnDOMContentLoaded Fired: ", details);
 			}
 		});
 	};
 
 	let allow = name => {
-		allowed[name.toLowerCase()] = true;
+		if(allowed.indexOf(name) === -1) allowed.push(name);
 	};
 
 	let stop = name => {
-		allowed[name.toLowerCase()] = false;
+		let index = allowed.indexOf(name);
+		if(index === -1) return;
+		allowed.splice(index, 1);
+	};
+
+	let isAllowed = name => {
+		return allowed.indexOf(name) !== -1;
 	};
 
 	let shh = () => {
-		allowed = {};
+		allowed = [];
 		party = false;
 	};
 
@@ -471,12 +527,22 @@ let asphalt = (function() {
 		party = true;
 	};
 
+	let show = () => {
+		allowed.forEach(e => console.log);
+	};
+
+	let list = () => {
+		console.log("onCreated\nonRemoved\nonUpdated\nonBeforeNavigate\nonCommitted\nonDOMContentLoaded");
+	}
+
 	return {
 		start: bindListeners,
 		allow: allow,
 		stop: stop,
 		shh: shh,
 		printTree: printTree,
-		party: startParty
+		party: startParty,
+		show: show,
+		list: list
 	};
 })();

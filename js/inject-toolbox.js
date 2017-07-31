@@ -171,6 +171,9 @@ let toolbox = (function() {
 			if(message.requirement) {
 				switch(message.requirement) {
 					case 'resolveLocation':
+						components.browser.resolve = true;
+						components.chinbar.buttons[components.chinbar.buttonNames.indexOf('resolve')]
+							.classList.toggle(`${hsp}disabled`, false);
 						break;
 				}
 			}
@@ -197,22 +200,64 @@ let toolbox = (function() {
 	}
 
 	/*
-		loadLinks():
+		loadRoots():
+			Retrieves a list of root nodes and installs them into the 'root' tab.
+	*/
+	function loadRoots() {
 
+	}
+
+	/*
+		loadLinks():
+			Deletes existing links and reloads them from hopscotch.
 	*/
 	function loadLinks() {
 		let link = (name, url) => {
 			let elem = createElement('div', {class: `${hsp}link`});
-			elem.appendChild(createElement('p').setTextContent(name));
-			elem.appendChild(createElement('p').setTextContent(url));
+
+			let shorten = (text, len) => {
+				let strlength = text.length;
+				if(strlength > len)
+					text = text.substring(0, len / 2 - 3) + "..." + text.substring(strlength - len / 2, strlength);
+				return text;
+			}
+
+			let fixedName = shorten(name, 64);
+			let fixedUrl = shorten(url, 40);
+
+			elem.appendChild(createElement('p').setTextContent(fixedName));
+			elem.appendChild(createElement('p').setTextContent(fixedUrl));
 
 			elem.addEventListener('click', event => {
-				window.location = url;
+				if(elem.classList.contains(`${hsp}active`)) {
+					chrome.runtime.sendMessage({action: 'stepinto', handle: url});
+					loadLinks();
+					return;
+				}
+				chrome.runtime.sendMessage({action: 'navigate', handle: url});
 				toggle();
 			});
 
 			elem.addEventListener('contextmenu', event => {
 				event.preventDefault();
+
+				elem.classList.toggle(`${hsp}active`);
+
+				// If this is off now, we've just right clicked on the active link again.
+				// That means the user is opting out of action mode, and we need to disable it.
+				if(!elem.classList.contains(`${hsp}active`)) {
+					components.browser.actionMode = false;
+					components.browser.selection = undefined;
+					return false;
+				}
+
+				if(components.browser.selection) { // If something was selected before this
+					// Then we want to disable it to avoid duplicate selection
+					components.browser.selection.elem.classList.toggle(`${hsp}active`, false);
+				}
+
+				components.browser.selection = {elem: elem, url: url};
+				components.browser.actionMode = true;
 
 				return false;
 			});
@@ -222,12 +267,18 @@ let toolbox = (function() {
 
 		chrome.runtime.sendMessage({action: 'fetchLinks'}, reply => {
 			let fragment = document.createDocumentFragment();
+			components.browser.links = [];
 
 			if(reply.links) {
-				reply.links.forEach(elem => {
-					fragment.appendChild(link(elem.name, elem.url));
+				reply.links.forEach((elem, index) => {
+					components.browser.links.push(link(elem.name, elem.url));
+					fragment.appendChild(components.browser.links[index]);
 				});
 			}
+
+			let backstep = components.chinbar.buttons[components.chinbar.buttonNames.indexOf('backstep')];
+
+			backstep.classList.toggle(`${hsp}disabled`, !reply.canRecede);
 
 			while(components.browser.firstChild) {
 				components.browser.removeChild(components.browser.firstChild);
@@ -249,6 +300,12 @@ let toolbox = (function() {
 		if(state) {
 			hovered = true;
 			if(widgetVisible) toggleWidget(false);
+		} else {
+			components.browser.actionMode = false;
+			if(components.browser.selection) {
+				components.browser.selection.elem.classList.toggle(`${hsp}active`, false);
+				components.browser.selection = undefined;
+			}
 		}
 	}
 
@@ -293,6 +350,9 @@ let toolbox = (function() {
 			activeButtons.splice(activeButtons.indexOf('resolve'), 1)
 		}
 
+		if(components.browser.resolve)
+			activeButtons.push('resolve');
+
 		components.chinbar.buttonNames.forEach((name, iter) => {
 			components.chinbar.buttons[iter].classList
 				.toggle(`${hsp}disabled`, activeButtons.indexOf(name) === -1);
@@ -305,7 +365,17 @@ let toolbox = (function() {
 	*/
 	function chinbarButtonPressed(name) {
 		switch(name) {
-
+			case 'backstep':
+				chrome.runtime.sendMessage({action: 'backstep'}, reply => {
+					if(reply.success)
+						loadLinks();
+				});
+				break;
+			case 'resolve':
+				if(components.browser.actionMode) {
+					chrome.runtime.sendMessage({action: 'resolve', handle: components.browser.selection.url});
+				}
+				break;
 		}
 	}
 
