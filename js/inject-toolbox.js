@@ -207,17 +207,28 @@ let toolbox = (function() {
 			elem.appendChild(createElement('p').setTextContent(url));
 
 			elem.addEventListener('click', event => {
-				console.log(event);toggle();
+				// Link was left clicked
+
+				toggle();
 			});
+
+			elem.addEventListener('contextmenu', event => {
+				event.preventDefault();
+				// Link was right clicked
+				toggleWidget();
+				return false;
+			})
 			return elem;
 		};
 
 		chrome.runtime.sendMessage({action: 'fetchLinks'}, reply => {
 			let fragment = document.createDocumentFragment();
 
-			reply.links.forEach(elem => {
-				fragment.appendChild(link(elem.name, elem.url));
-			});
+			if(reply.links) {
+				reply.links.forEach(elem => {
+					fragment.appendChild(link(elem.name, elem.url));
+				});
+			}
 
 			while(components.browser.firstChild) {
 				components.browser.removeChild(components.browser.firstChild);
@@ -312,8 +323,13 @@ let toolbox = (function() {
 			callback for getConfig.
 	*/
 	function onConfigLoaded(config) {
-		if(config.scrollbarHiding)
-			document.body.classList.toggle(`${hsp}remove-scrollbar`, true);
+		if(document.body) {
+			document.body.classList.toggle(`${hsp}remove-scrollbar`, config.scrollbarHiding);
+		} else {
+			document.addEventListener('DOMContentLoaded', () => {
+				document.body.classList.toggle(`${hsp}remove-scrollbar`, config.scrollbarHiding);
+			});
+		}
 	}
 
 	return {
