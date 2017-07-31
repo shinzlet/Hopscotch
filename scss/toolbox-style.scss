@@ -14,18 +14,17 @@ $frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
 
-$toolbar-bg: linear-gradient(30deg, rgba(45, 203, 255, 1), rgba(31, 110, 255, 1));
+$toolbar-bg: linear-gradient(30deg, #FF5D00, #FF9A00);
 $toolbar-opacity: 1.0;
-$chinbar-bg: #eee;
+$chinbar-bg: #222;
+$chinbar-button-highlight: rgba(255, 93, 0, 1);
 $chinbar-button-color: #555;
-$chinbar-button-inactive-color: #333;
-$chinbar-button-disabled-color: #888;
-$chinbar-button-pressed-color: $chinbar-button-inactive-color;
+$chinbar-button-disabled-color: rgba(255, 255, 255, 0.1);
 $chinbar-opacity: $toolbar-opacity;
-$sandwich-bg: #eee;
-$highlight: #fff;
+$sandwich-bg: #222;
+$button-highlight: #fff;
 $button-inactive-color: rgba(255, 255, 255, 0.5);
-$toolbar-button-pressed-color: $button-inactive-color;
+$toolbar-button-active-color: $button-inactive-color;
 $long-animation-time: 200ms;
 $snappy-animation-time: 100ms;
 
@@ -109,18 +108,18 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 	}
 
 	&#hopscotch-toolbox-chinbar {
-		background: $sandwich-bg;
+		background: $chinbar-bg;
 		opacity: $chinbar-opacity;
 		border-bottom-left-radius: $frame-radius;
 		border-bottom-right-radius: $frame-radius;
 		& .hopscotch-toolbox-button {
-			background: $chinbar-button-inactive-color;
+			background: $chinbar-button-color;
 			&.hopscotch-toolbox-active, &:hover {
-				background: $chinbar-button-color;
+				background: $chinbar-button-highlight;
 			}
 
 			&:active {
-				background: $chinbar-button-pressed-color;
+				background: $chinbar-button-color;
 			}
 
 			&.hopscotch-toolbox-disabled {
@@ -143,11 +142,11 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		-webkit-mask-repeat: no-repeat;
 
 		&.hopscotch-toolbox-active, &:hover {
-			background: $highlight;
+			background: $button-highlight;
 		}
 
 		&:active {
-			background: $toolbar-button-pressed-color;
+			background: $toolbar-button-active-color;
 		}
 
 		&.hopscotch-toolbox-button-add {
