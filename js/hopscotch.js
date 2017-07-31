@@ -312,7 +312,12 @@ chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 
-			if(details.transitionType === 'reload') return;
+			if(details.transitionQualifiers && details.transitionQualifiers.indexOf('forward_back') === -1) {
+				// forward_back events sometimes say they are a reload even though they are real navigation
+				if(details.transitionType === 'reload') {
+					return false;
+				}
+			}
 
 			let currentNode = tabs[details.tabId].node;
 			let shouldReturn = false;

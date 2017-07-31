@@ -207,17 +207,16 @@ let toolbox = (function() {
 			elem.appendChild(createElement('p').setTextContent(url));
 
 			elem.addEventListener('click', event => {
-				// Link was left clicked
-
+				window.location = url;
 				toggle();
 			});
 
 			elem.addEventListener('contextmenu', event => {
 				event.preventDefault();
-				// Link was right clicked
-				toggleWidget();
+
 				return false;
-			})
+			});
+
 			return elem;
 		};
 
