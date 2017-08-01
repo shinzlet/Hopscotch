@@ -166,6 +166,9 @@ let toolbox = (function() {
 				case 'launchWidget':
 					toggleWidget(true);
 					break;
+				case 'reload':
+					loadLinks();
+					break;
 			}
 
 			if(message.requirement) {

@@ -297,6 +297,7 @@ chrome.tabs.onRemoved.addListener((tabId, details) => {
 */
 chrome.tabs.onUpdated.addListener((tabId, details) => {
 	if(details.title && tabs[tabId]) {
+		chrome.tabs.sendMessage(tabId, {action: 'reload'});
 		tabs[tabId].node.set('name', details.title);
 	}
 });

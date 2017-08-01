@@ -5,6 +5,6 @@
 	"stitchFallback": "newBranch",
 	"treeSimplification": true,
 	"urlTypedAction": "subBranch",
-	"browserNavigation": "sticky",
-	"shortcut": ["ControlLeft", "Backquote"]
+	"browserNavigation": "fixed",
+	"shortcut": ["AltLeft", "AltRight"]
 }
