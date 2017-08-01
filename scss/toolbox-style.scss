@@ -35,7 +35,8 @@ $link-count: 4.5;
 $link-bg: rgba(0, 0, 0, 0);
 $link-highlight: rgba(0, 0, 0, 0.2);
 $link-url-color: #555;
-$link-name-color: #FCFF00;
+$link-name-color: $frame-bg;
+$link-highlight-name-color: white;
 $link-line-height: 18px;
 $link-font-size: 14px;
 
@@ -243,7 +244,6 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 	p {
 		font-size: $link-font-size;
 		line-height: $link-line-height;
-		transition: all $snappy-animation-time;
 
 		&:nth-child(1) {
 			font-weight: bold;
@@ -263,15 +263,10 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		background: $link-highlight;
 	}
 
-	&.hopscotch-toolbox-active::before {
-		content: '';
-		z-index: 1000000000;
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background: $frame-bg;
-		display: block;
-		float: left;
+	&.hopscotch-toolbox-active p:nth-child(1) {
+		background: $link-highlight-name-color;
+		-webkit-text-fill-color: transparent;
+		-webkit-background-clip: text;
 	}
 }
 

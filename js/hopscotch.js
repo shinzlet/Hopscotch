@@ -155,12 +155,6 @@ let root = createNode(undefined, {name: 'root', path: 'n/a'});
 let tabs = {};
 
 /*
-	flagNames:
-		An object containing the names of various possible tab flags.
-*/
-let flagNames = {lost: 'lost', stall: 'stall'};
-
-/*
 	createTab(id, node, flags, tree):
 		A method to create a hopscotch tab object and append it to 'tabs'.
 		The only manditory parameter is 'id', but without a node this function is
@@ -193,6 +187,16 @@ function pointTab(id, location) {
 }
 
 /*
+	newTabRegex:
+		A RegEx string used to identify new tab urls.
+		E.g: https://www.google.ca/_/chrome/newtab?blahblahblah
+		chrome://newtab/
+		not:
+		internet.com/chrome://newtab
+*/
+let newTabRegex = /^([a-z]+:\/\/www\.google\.\w+\/_\/)?chrome(:\/\/)?(\/)?newtab/;
+
+/*
 	validate(tabId, callback):
 		This function checks if the tab is already being tracked. If not, it will attempt
 		to stich it to the existing tree via it's history. If the user has disabled this
@@ -211,7 +215,7 @@ function validate(tabId, callback) {
 				switch(config.stitchFallback) {
 					case 'prompt':
 						let tempRoot = createNode(undefined, {name: tab.title, url: tab.url}); // We don't know where this is connected, so we can't specify the parent.
-						createTab(tabId, tempRoot, [flagNames.lost], tempRoot);
+						createTab(tabId, tempRoot, ['lost'], tempRoot);
 						break;
 					case 'newBranch':
 						let node = createNode(root, {name: tab.title, url: tab.url});
@@ -268,7 +272,7 @@ chrome.tabs.onCreated.addListener(tab => {
 			break;
 		case 'prompt':
 			newNode = createNode(undefined, {name: tab.title, url: tab.url});
-			createTab(tab.id, newNode, [flagNames.lost, flagNames.stall], newNode);
+			createTab(tab.id, newNode, ['lost', 'stall'], newNode);
 			break;
 	}
 });
@@ -313,7 +317,7 @@ chrome.webNavigation.onCommitted.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 			// If the stall flag is present, we need to delete the flag and return.
-			let stallIndex = (tabs[details.tabId].flags || []).indexOf(flagNames.stall);
+			let stallIndex = (tabs[details.tabId].flags || []).indexOf('stall');
 			if(stallIndex !== -1) {
 				tabs[details.tabId].flags.splice(stallIndex, 1);
 				return;
@@ -329,17 +333,18 @@ chrome.webNavigation.onCommitted.addListener(details => {
 				}
 			}
 
-			if(details.transitionType === 'typed') {
+			if(details.transitionType === 'typed' || details.transitionType === 'auto_bookmark') {
 				let newNode = {};
 				switch(config.urlTypedAction) {
 					case 'prompt': // It's easiest just to reassign the tab to a new tree.
 						newNode = createNode(undefined, {name: details.url, url: details.url});
-						createTab(details.tabId, newNode, [flagNames.lost], newNode);
+						createTab(details.tabId, newNode, ['lost'], newNode);
 						break;
 					case 'subBranch':
 						return; // This is the default behaviour.
 					case 'newBranch':
 						newNode = createNode(root, {name: details.url, url: details.url});
+						pointTab(details.tabId, newNode);
 						break;
 				}
 			}
@@ -348,9 +353,19 @@ chrome.webNavigation.onCommitted.addListener(details => {
 			let shouldReturn = false;
 
 			if(config.treeSimplification) {
-				if(currentNode.getParent() && currentNode.getParent().get('url') === details.url) {
-					pointTab(details.tabId, currentNode.getParent());
-					return;
+				if(currentNode.getParent()) {
+					// If the parent node was just a new tab
+					if(newTabRegex.test(currentNode.getParent().get('url'))) {
+						// Overwrite it with this node's data and don't repoint
+						currentNode.getParent.set('url', details.url);
+						// The name will be updated by onUpdated after this, so we don't change it
+						return;
+					}
+
+					if(currentNode.getParent().get('url') === details.url) {
+						pointTab(details.tabId, currentNode.getParent());
+						return;
+					}
 				}
 
 				currentNode.getChildren().forEach(child => {
@@ -388,7 +403,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 	validate(details.tabId, () => {
 		if(details.frameId === 0) {
 			if(tabs[details.tabId].flags &&
-				 tabs[details.tabId].flags.indexOf(flagNames.lost) !== -1) {
+				 tabs[details.tabId].flags.indexOf('lost') !== -1) {
 				chrome.tabs.sendMessage(details.tabId, {
 					action: 'launchWidget',
 					requirement: 'resolveLocation'
@@ -410,6 +425,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// I'm not using switch case cause I'm not up for dealing with the dumb scoping
 		if(message.action === 'fetchLinks') {
 			let watchNode = tabs[id].watching;
+			if((tabs[id].flags || []).indexOf('lost') !== -1) watchNode = root;
 			let data = [];
 
 			watchNode.getChildren().forEach(child => {
@@ -437,7 +453,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			watchNode.getChildren().forEach(child => {
 				if(child.get('url') === message.handle) {
 					pointTab(id, child);
-					(tabs[id].flags || (tabs[id].flags = [])).push(flagNames.stall);
+					(tabs[id].flags || (tabs[id].flags = [])).push('stall');
 					chrome.tabs.update(id, {url: child.get('url')});
 					return;
 				}
