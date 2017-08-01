@@ -99,9 +99,8 @@ let toolbox = (function() {
 
 		components.sandwich = createElement('div', {id: `${hsp}sandwich`});
 
-		components.slices = ['browser', 'settings', 'root'];
+		components.slices = ['browser', 'settings'];
 		components.browser = createElement('div', {class: `${hsp}slice ${hsp}browser ${hsp}active`});
-		components.root = createElement('div', {class: `${hsp}slice ${hsp}browser`});
 		components.settings = createElement('div', {class: `${hsp}slice ${hsp}settings`});
 
 		components.toolbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}toolbar`});
@@ -123,9 +122,11 @@ let toolbox = (function() {
 		components.frame.appendChild(components.sandwich);
 		components.frame.appendChild(components.chinbar);
 		components.sandwich.appendChild(components.browser);
-		components.sandwich.appendChild(components.root);
 		components.sandwich.appendChild(components.settings);
 		components.toolbar.buttons.appendTo(components.toolbar);
+		components.toolbar.appendChild(button('reload', () => {
+			loadLinks();
+		}));
 		components.chinbar.buttons.forEach(button => { components.chinbar.appendChild(button); });
 	}
 
@@ -154,7 +155,6 @@ let toolbox = (function() {
 			attention widget.
 	*/
 	function bindToolbox() {
-		bindShortcut({keys: ['AltLeft', 'AltRight'], callback: toggle});
 		bindShortcut({keys: ['Escape'], callback: () => {
 			if(isOpen()) {
 				toggle(false);
@@ -376,6 +376,12 @@ let toolbox = (function() {
 					chrome.runtime.sendMessage({action: 'resolve', handle: components.browser.selection.url});
 				}
 				break;
+			case 'remove':
+				if(components.browser.actionMode) {
+					chrome.runtime.sendMessage({action: 'remove', handle: components.browser.selection.url});
+					loadLinks();
+				}
+				break;
 		}
 	}
 
@@ -399,6 +405,9 @@ let toolbox = (function() {
 				document.body.classList.toggle(`${hsp}remove-scrollbar`, config.scrollbarHiding);
 			});
 		}
+
+
+		bindShortcut({keys: config.shortcut, callback: toggle});
 	}
 
 	return {

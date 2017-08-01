@@ -357,7 +357,10 @@ chrome.webNavigation.onCommitted.addListener(details => {
 					// If the parent node was just a new tab
 					if(newTabRegex.test(currentNode.getParent().get('url'))) {
 						// Overwrite it with this node's data and don't repoint
+						console.log("Active");
+						asphalt.printTree(root);
 						currentNode.getParent.set('url', details.url);
+						asphalt.printTree(root);
 						// The name will be updated by onUpdated after this, so we don't change it
 						return;
 					}
@@ -445,6 +448,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			tabs[id].watching.getChildren().forEach(node => {
 				if(node.get('url') === message.handle) {
 					tabs[id].watching = node;
+					return;
+				}
+			});
+		} else if(message.action === 'remove') {
+			tabs[id].watching.getChildren().forEach((node, index) => {
+				if(node.get('url') === message.handle) {
+					// If the node we are deleting is at a lower node level than any of the nodes being navigated,
+					// We need to close those tabs.
+					let dist = node.getRootDistance();
+					Object.keys(tabs).forEach(id => {
+						if(tabs[id].node.getRootDistance() > dist) {
+							delete tabs[id];
+							chrome.tabs.remove(parseInt(id));
+						} else if(tabs[id].node.getRootDistance === dist) {
+							// If a tab's node is being deleted we have to delete it
+							if(node.get('url') === tabs[id].node.get('url')) {
+								delete tabs[id];
+								chrome.tabs.remove(parseInt(id));
+							}
+						};
+					});
+					// Remove the child.
+					tabs[id].watching.getChildren().splice(index, 1);
+					delete node;
 					return;
 				}
 			});
