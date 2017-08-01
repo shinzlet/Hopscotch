@@ -461,7 +461,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 						if(tabs[id].node.getRootDistance() > dist) {
 							delete tabs[id];
 							chrome.tabs.remove(parseInt(id));
-						} else if(tabs[id].node.getRootDistance === dist) {
+						} else if(tabs[id].node.getRootDistance() === dist) {
 							// If a tab's node is being deleted we have to delete it
 							if(node.get('url') === tabs[id].node.get('url')) {
 								delete tabs[id];
