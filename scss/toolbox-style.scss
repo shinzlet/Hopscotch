@@ -13,7 +13,7 @@
 $frame-radius: 5px;
 $frame-width: 300px;
 $frame-edge-spacing: 50px;
-$frame-bg: linear-gradient(30deg, #FCFF00, #FFCD00);
+$frame-bg: linear-gradient(30deg, #FFCD00, #FF5C00);
 
 $toolbar-bg: transparent;
 $toolbar-opacity: 1.0;
@@ -35,8 +35,8 @@ $link-count: 4.5;
 $link-bg: rgba(0, 0, 0, 0);
 $link-highlight: rgba(0, 0, 0, 0.2);
 $link-url-color: #555;
-$link-name-color: $frame-bg;
-$link-highlight-name-color: white;
+$link-name-color: white;
+$link-highlight-name-color: $frame-bg;
 $link-line-height: 18px;
 $link-font-size: 14px;
 
@@ -247,7 +247,7 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 
 		&:nth-child(1) {
 			font-weight: bold;
-			background: $frame-bg;
+			background: $link-name-color;
 			-webkit-text-fill-color: transparent;
 			-webkit-background-clip: text;
 		}

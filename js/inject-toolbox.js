@@ -376,7 +376,15 @@ let toolbox = (function() {
 				break;
 			case 'resolve':
 				if(components.browser.actionMode) {
-					chrome.runtime.sendMessage({action: 'resolve', handle: components.browser.selection.url});
+					chrome.runtime.sendMessage({action: 'resolve', handle: components.browser.selection.url}, reply => {
+						if(reply.success) {
+							loadLinks();
+							components.browser.actionMode = false;
+							components.browser.selection.elem.classList.toggle(`${hsp}active`);
+							components.browser.selection = undefined;
+							components.browser.resolve = false;
+						}
+					});
 				}
 				break;
 			case 'remove':

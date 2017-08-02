@@ -1,10 +1,10 @@
 {
 	"scrollbarHiding": true,
-	"newTabAction": "subBranch",
+	"newTabAction": "prompt",
 	"attemptStitching": true,
 	"stitchFallback": "newBranch",
 	"treeSimplification": true,
 	"urlTypedAction": "subBranch",
-	"browserNavigation": "fixed",
+	"browserNavigation": "tracked",
 	"shortcut": ["AltLeft", "AltRight"]
 }

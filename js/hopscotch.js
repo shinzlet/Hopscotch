@@ -22,11 +22,11 @@ let config = {
 /*
 	This code block loads the config.json and stores it in the variable 'config'.
 */
-{
+function loadConfig() {
 	let request = new XMLHttpRequest();
 
 	request.onreadystatechange = () => {
-	  if (request.readyState === 4 && request.status === 200) {
+	  if (request.readyState === 4) {
 			if(request.status === 200) {
 	    	config = JSON.parse(request.responseText);
 				configReady = true;
@@ -44,6 +44,7 @@ let config = {
 	request.send();
 }
 
+loadConfig();
 
 /*
 	createNode(parent, data):
@@ -258,21 +259,25 @@ chrome.tabs.onCreated.addListener(tab => {
 	switch(config.newTabAction) {
 		case 'newBranch':
 			newNode = createNode(root, {name: tab.title, url: tab.url});
-			createTab(tab.id, newNode);
+			createTab(tab.id, newNode, ['stall']);
 			break;
+		case 'prompt':
+			if(root.getChildren().length !== 0) {
+				newNode = createNode(undefined, {name: tab.url, url: tab.url});
+				createTab(tab.id, newNode, ['lost', 'stall'], newNode);
+				break;
+			}
+			// Ruh roh we're falling through
+			// (just kidding this is what we're supposed to do :))
 		case 'subBranch':
 			chrome.tabs.get(tab.openerTabId || tab.id, opener => {
 				validate(opener.id, () => {
 					// This event happens before onCommitted will be called, so by pointing
 					// this tab to it's invoker's node, onCommitted will still point this
 					// to the right node, but it'll avoid node duplication.
-					createTab(tab.id, tabs[opener.id].node);
+					createTab(tab.id, tabs[opener.id].node, ['stall']);
 				});
 			});
-			break;
-		case 'prompt':
-			newNode = createNode(undefined, {name: tab.title, url: tab.url});
-			createTab(tab.id, newNode, ['lost', 'stall'], newNode);
 			break;
 	}
 });
@@ -297,8 +302,8 @@ chrome.tabs.onRemoved.addListener((tabId, details) => {
 */
 chrome.tabs.onUpdated.addListener((tabId, details) => {
 	if(details.title && tabs[tabId]) {
-		chrome.tabs.sendMessage(tabId, {action: 'reload'});
 		tabs[tabId].node.set('name', details.title);
+		chrome.tabs.sendMessage(tabId, {action: 'reload'});
 	}
 });
 
@@ -342,7 +347,7 @@ chrome.webNavigation.onCommitted.addListener(details => {
 						createTab(details.tabId, newNode, ['lost'], newNode);
 						break;
 					case 'subBranch':
-						return; // This is the default behaviour.
+						break; // This is the default behaviour.
 					case 'newBranch':
 						newNode = createNode(root, {name: details.url, url: details.url});
 						pointTab(details.tabId, newNode);
@@ -358,10 +363,7 @@ chrome.webNavigation.onCommitted.addListener(details => {
 					// If the parent node was just a new tab
 					if(newTabRegex.test(currentNode.getParent().get('url'))) {
 						// Overwrite it with this node's data and don't repoint
-						console.log("Active");
-						asphalt.printTree(root);
-						currentNode.getParent.set('url', details.url);
-						asphalt.printTree(root);
+						currentNode.getParent().set('url', details.url);
 						// The name will be updated by onUpdated after this, so we don't change it
 						return;
 					}
@@ -382,8 +384,6 @@ chrome.webNavigation.onCommitted.addListener(details => {
 
 				if(shouldReturn) return;
 			}
-
-			qualifiers = details.transitionQualifiers || [];
 
 			let newNode = createNode(currentNode, {name: details.url, url: details.url});
 			pointTab(details.tabId, newNode);
@@ -423,7 +423,7 @@ chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 	resolutions.
 */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	let id = sender.tab.id;
+	let id = parseInt(sender.tab.id);
 
 	validate(id, () => {
 		// I'm not using switch case cause I'm not up for dealing with the dumb scoping
@@ -442,13 +442,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		} else if(message.action === 'backstep') {
 			let watchNode = tabs[id].watching;
 			if(watchNode.getParent()) {
-				tabs[id].watching = watchNode.getParent();
+				pointTab(id, watchNode.getParent());
 			}
 			sendResponse({success: (watchNode.getParent() !== undefined)});
 		} else if(message.action === 'stepinto') {
 			tabs[id].watching.getChildren().forEach(node => {
 				if(node.get('url') === message.handle) {
-					tabs[id].watching = node;
+					pointTab(id, node);
 					return;
 				}
 			});
@@ -461,12 +461,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 					Object.keys(tabs).forEach(id => {
 						if(tabs[id].node.getRootDistance() > dist) {
 							delete tabs[id];
-							chrome.tabs.remove(parseInt(id));
+							chrome.tabs.remove(id);
 						} else if(tabs[id].node.getRootDistance() === dist) {
 							// If a tab's node is being deleted we have to delete it
 							if(node.get('url') === tabs[id].node.get('url')) {
 								delete tabs[id];
-								chrome.tabs.remove(parseInt(id));
+								chrome.tabs.remove(id);
 							}
 						};
 					});
@@ -477,7 +477,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				}
 			});
 		} else if(message.action === 'navigate') {
+			let flagIndex = (tabs[id].flags || []).indexOf('lost');
+			if(flagIndex !== -1) {
+				tabs[id].flags.splice(flagIndex, 1);
+			}
 			let watchNode = tabs[id].watching;
+
 			watchNode.getChildren().forEach(child => {
 				if(child.get('url') === message.handle) {
 					pointTab(id, child);
@@ -486,6 +491,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 					return;
 				}
 			});
+		} else if(message.action === 'resolve') {
+			let flagIndex = (tabs[id].flags || []).indexOf('lost');
+			let success = false;
+			if(flagIndex !== -1) { // This should never not be true, but just in case
+				let watchNode = tabs[id].watching;
+				asphalt.printTree(watchNode);
+				watchNode.getChildren().forEach(child => {
+					if(child.get('url') === message.handle) {
+						child.appendNode(tabs[id].root);
+						pointTab(id, child);
+						tabs[id].flags.splice(flagIndex, 1); // remove the lost flag
+					}
+				});
+			}
+			sendResponse({success: success});
 		}
 	});
 });
