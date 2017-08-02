@@ -11,11 +11,11 @@ let configReady = false;
 */
 let config = {
 	"scrollbarHiding": false,
-	"newTabAction": "newBranch",
+	"newTabAction": "branch",
 	"attemptStitching": true,
-	"stitchFallback": "newBranch",
+	"stitchFallback": "branch",
 	"treeSimplification": true,
-	"urlTypedAction": "subBranch",
+	"urlTypedAction": "leaf",
 	"browserNavigation": "tracked"
 };
 
@@ -224,7 +224,7 @@ function validate(tabId, callback) {
 						let tempRoot = createNode(undefined, {name: tab.title, url: tab.url}); // We don't know where this is connected, so we can't specify the parent.
 						createTab(tabId, tempRoot, ['lost'], tempRoot);
 						break;
-					case 'newBranch':
+					case 'branch':
 						let node = createNode(root, {name: tab.title, url: tab.url});
 						createTab(tabId, node);
 						break;
@@ -255,15 +255,15 @@ let tabQueue = undefined;
 /*
 	Callback is fired when a tab is created.
 	Functionality:
-		If the user has specified that all new tabs should be appended to the tree's root ('newBranch'),
-		create a branch for this new tab. If the setting is 'subBranch', append the new tab's root onto
+		If the user has specified that all new tabs should be appended to the tree's root ('branch'),
+		create a branch for this new tab. If the setting is 'leaf', append the new tab's root onto
 		the active node of the tab that invoked it's creation. If the user has specified to prompt them
 		about this action, create a lost tab.
 */
 chrome.tabs.onCreated.addListener(tab => {
 	let newNode = {};
 	switch(config.newTabAction) {
-		case 'newBranch':
+		case 'branch':
 			newNode = createNode(root, {name: tab.title, url: tab.url});
 			createTab(tab.id, newNode, ['stall']);
 			break;
@@ -276,7 +276,7 @@ chrome.tabs.onCreated.addListener(tab => {
 			}
 			// Ruh roh we're falling through
 			// (just kidding this is what we're supposed to do :))
-		case 'subBranch':
+		case 'leaf':
 			chrome.tabs.get(tab.openerTabId || tab.id, opener => {
 				validate(opener.id, () => {
 					// This event happens before onCommitted will be called, so by pointing
@@ -363,9 +363,9 @@ chrome.webNavigation.onCommitted.addListener(details => {
 						newNode = createNode(undefined, {name: details.url, url: details.url});
 						createTab(details.tabId, newNode, ['lost'], newNode);
 						break;
-					case 'subBranch':
+					case 'leaf':
 						break; // This is the default behaviour.
-					case 'newBranch':
+					case 'branch':
 						newNode = createNode(root, {name: details.url, url: details.url});
 						pointTab(details.tabId, newNode);
 						break;

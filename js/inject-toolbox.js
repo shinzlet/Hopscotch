@@ -91,7 +91,6 @@ let toolbox = (function() {
 
 		let settingToggle = (name, property) => {
 			let elem = createElement('div', {class: `${hsp}setting-toggle`}).setTextContent(name);
-			(components.settings.widgets || (components.settings.widgets = [])).push(elem);
 
 			elem.addEventListener('click', () => {
 				let state = elem.classList.toggle(`${hsp}active`);
@@ -104,8 +103,41 @@ let toolbox = (function() {
 
 			elem.property = property;
 
+			(components.settings.widgets || (components.settings.widgets = [])).push(elem);
 			return elem;
 		};
+
+		let settingCycle = (name, property, values) => {
+			let elem = createElement('div', {class: `${hsp}setting-cycle`});
+			let title = createElement('p').setTextContent(name);
+			let value = createElement('p');
+			let keys = Object.keys(values);
+			let index = 0;
+			let state = keys[index];
+			value.setTextContent(values[state]);
+
+			elem.appendChild(title);
+			elem.appendChild(value);
+
+			elem.addEventListener('click', () => {
+				index++;
+				index %= keys.length;
+				state = keys[index];
+				value.innerHTML = values[state];
+				chrome.runtime.sendMessage({action: 'alterConfig', property: property, value: state});
+			});
+
+			elem.property = property;
+
+			elem.show = val => {
+				state = val;
+				value.innerHTML = values[state];
+				index = keys.indexOf(val);
+			};
+
+			(components.settings.widgets || (components.settings.widgets = [])).push(elem);
+			return elem;
+		}
 
 		// Initialize components
 		components.docfrag = document.createDocumentFragment();
@@ -144,6 +176,9 @@ let toolbox = (function() {
 		components.settings.appendChild(settingToggle("Scrollbar Hiding", 'scrollbarHiding'));
 		components.settings.appendChild(settingToggle("Attempt Stitching", 'attemptStitching'));
 		components.settings.appendChild(settingToggle("Tree Simplification", 'treeSimplification'));
+		components.settings.appendChild(settingCycle("New Tab:", 'newTabAction', {'prompt': "Prompt", 'branch': "Branch", 'leaf': "Leaf"}));
+		components.settings.appendChild(settingCycle("Manual:", 'urlTypedAction', {'prompt': "Prompt", 'branch': "Branch", 'leaf': "Leaf"}));
+		components.settings.appendChild(settingCycle("Stitch Fail:", 'stitchFallback', {'prompt': "Prompt", 'branch': "Branch"}));
 
 		components.toolbar.buttons.appendTo(components.toolbar);
 		components.toolbar.appendChild(button('reload', () => {

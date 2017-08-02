@@ -229,6 +229,46 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		&.hopscotch-toolbox-settings {
 			min-height: $link-min-height;
 			max-height: $link-min-height * $link-count;
+			overflow: scroll;
+
+			div {
+				width: 100%;
+				min-height: $link-min-height;
+				font-size: 16px;
+				color: $setting-name-color;
+
+				&:hover {
+					background: $link-highlight;
+					cursor: pointer;
+				}
+			}
+
+			.hopscotch-toolbox-setting-toggle {
+				display: flex;
+				align-items: center;
+
+				&::before {
+					content: '';
+					display: inline-block;
+					width: $link-min-height;
+					height: $link-min-height;
+					background-position: center;
+					background-repeat: no-repeat;
+					background-size: 80%;
+
+					background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-icon.svg');
+				}
+
+				&.hopscotch-toolbox-active::before {
+					background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-checked-icon.svg');
+				}
+			}
+
+			.hopscotch-toolbox-setting-cycle {
+				display: flex;
+				align-items: center;
+				justify-content: space-around;
+			}
 		}
 	}
 }
@@ -300,36 +340,5 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		background: white;
 		display: inline-block;
 		shape-rendering: crispEdges;
-	}
-}
-
-.hopscotch-toolbox-setting-toggle {
-	width: 100%;
-	min-height: $link-min-height;
-	text-align: right;
-	display: flex;
-	align-items: center;
-	font-size: 16px;
-	color: $setting-name-color;
-
-	&:hover {
-		background: $link-highlight;
-		cursor: pointer;
-	}
-
-	&::before {
-		content: '';
-		display: inline-block;
-		width: $link-min-height;
-		height: $link-min-height;
-		background-position: center;
-		background-repeat: no-repeat;
-		background-size: 80%;
-
-		background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-icon.svg');
-	}
-
-	&.hopscotch-toolbox-active::before {
-		background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-checked-icon.svg');
 	}
 }
