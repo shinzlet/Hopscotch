@@ -1,6 +1,6 @@
 {
 	"scrollbarHiding": true,
-	"newTabAction": "prompt",
+	"newTabAction": "subBranch",
 	"attemptStitching": true,
 	"stitchFallback": "newBranch",
 	"treeSimplification": true,
