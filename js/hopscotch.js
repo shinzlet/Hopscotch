@@ -314,6 +314,16 @@ chrome.tabs.onUpdated.addListener((tabId, details) => {
 	}
 });
 
+/*
+	Callback is fired when a tab is brought into focus.
+	Functionality:
+		Triggers a hst browser reload, which allows a seamless experience that should eliminate
+		the need to refresh the hst browser manually after nav.
+*/
+chrome.tabs.onActivated.addListener(details => {
+	chrome.tabs.sendMessage(details.tabId, {action: 'reload'});
+});
+
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
 
 });
