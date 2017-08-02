@@ -91,6 +91,7 @@ let toolbox = (function() {
 
 		let settingToggle = (name, property) => {
 			let elem = createElement('div', {class: `${hsp}setting-toggle`}).setTextContent(name);
+			(components.settings.widgets || (components.settings.widgets = [])).push(elem);
 
 			elem.addEventListener('click', () => {
 				let state = elem.classList.toggle(`${hsp}active`);
@@ -428,7 +429,11 @@ let toolbox = (function() {
 			});
 		}
 
-
+		components.settings.widgets.forEach(elem => {
+			if(config[elem.property] !== undefined) {
+				elem.show(config[elem.property]);
+			}
+		});
 
 		bindShortcut({keys: config.shortcut, callback: toggle});
 	}
