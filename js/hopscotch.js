@@ -10,19 +10,21 @@ let configReady = false;
 		that the config cannot (or takes absurdly long to) load, these will be defaulted to.
 */
 let config = {
-	"scrollbarHiding": false,
-	"newTabAction": "branch",
+	"scrollbarHiding": true,
+	"newTabAction": "leaf",
 	"attemptStitching": true,
 	"stitchFallback": "branch",
 	"treeSimplification": true,
 	"urlTypedAction": "leaf",
-	"browserNavigation": "tracked"
+	"browserNavigation": "tracked",
+	"shortcut": ["AltLeft", "AltRight"]
 };
 
 /*
 	This code block loads the config.json and stores it in the variable 'config'.
 */
 function loadConfig() {
+	/* Old version that loaded from a local file
 	let request = new XMLHttpRequest();
 
 	request.onreadystatechange = () => {
@@ -42,6 +44,15 @@ function loadConfig() {
 
 	request.open('GET', chrome.runtime.getURL('config.json'));
 	request.send();
+	*/
+
+	chrome.storage.sync.getBytesInUse(Object.keys(config), amount => {
+		if(amount !== 0) {
+			chrome.storage.sync.get(cfg => {
+				config = cfg; // et voila
+			});
+		}
+	});
 }
 
 loadConfig();
@@ -526,6 +537,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			sendResponse({success: success});
 		} else if(message.action === 'alterConfig') {
 			config[message.property] = message.value;
+			chrome.storage.sync.set(config); // Save the config
 		}
 	});
 });

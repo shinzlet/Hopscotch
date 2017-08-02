@@ -157,7 +157,7 @@ let toolbox = (function() {
 		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
 
 		components.toolbar.buttons = panel(components.slices, switchMenu);
-		components.chinbar.buttonNames = ['backstep', 'remove', 'splice', 'resolve'];
+		components.chinbar.buttonNames = ['backstep', 'remove', 'resolve'];
 		components.chinbar.buttons = components.chinbar.buttonNames.map(name => {
 			return button(name, chinbarButtonPressed);
 		});
