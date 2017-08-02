@@ -96,6 +96,10 @@ function createNode(parent, data, noAppend) {
 		return parent;
 	};
 
+	let setParent = node => {
+		parent = node;
+	};
+
 	/*
 		get(key):
 			Returns the responding value from the data object for the provided key.
@@ -123,6 +127,7 @@ function createNode(parent, data, noAppend) {
 	let node = {
 		appendChild: appendChild,
 		getParent: getParent,
+		setParent: setParent,
 		getChildren: getChildren,
 		getRootDistance: getRootDistance,
 		get: get,
@@ -184,6 +189,7 @@ function pointTab(id, location) {
 	tabs[id].node = location;
 	if(config.browserNavigation === 'tracked') {
 		tabs[id].watching = location;
+		if((tabs[id].flags || []).indexOf('lost') !== -1) tabs[id].watching = root;
 	}
 }
 
@@ -265,6 +271,7 @@ chrome.tabs.onCreated.addListener(tab => {
 			if(root.getChildren().length !== 0) {
 				newNode = createNode(undefined, {name: tab.url, url: tab.url});
 				createTab(tab.id, newNode, ['lost', 'stall'], newNode);
+				pointTab(tab.id, newNode);
 				break;
 			}
 			// Ruh roh we're falling through
@@ -429,7 +436,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// I'm not using switch case cause I'm not up for dealing with the dumb scoping
 		if(message.action === 'fetchLinks') {
 			let watchNode = tabs[id].watching;
-			if((tabs[id].flags || []).indexOf('lost') !== -1) watchNode = root;
 			let data = [];
 
 			watchNode.getChildren().forEach(child => {
@@ -442,13 +448,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		} else if(message.action === 'backstep') {
 			let watchNode = tabs[id].watching;
 			if(watchNode.getParent()) {
-				pointTab(id, watchNode.getParent());
+				tabs[id].watching = watchNode.getParent();
 			}
 			sendResponse({success: (watchNode.getParent() !== undefined)});
 		} else if(message.action === 'stepinto') {
 			tabs[id].watching.getChildren().forEach(node => {
 				if(node.get('url') === message.handle) {
-					pointTab(id, node);
+					tabs[id].watching = node;
 					return;
 				}
 			});
@@ -496,12 +502,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 			let success = false;
 			if(flagIndex !== -1) { // This should never not be true, but just in case
 				let watchNode = tabs[id].watching;
-				asphalt.printTree(watchNode);
 				watchNode.getChildren().forEach(child => {
 					if(child.get('url') === message.handle) {
-						child.appendNode(tabs[id].root);
-						pointTab(id, child);
+						child.appendChild(tabs[id].root);
+						tabs[id].root.setParent(child);
+						tabs[id].watching = child;
 						tabs[id].flags.splice(flagIndex, 1); // remove the lost flag
+						success = true;
+						delete tabs[id].root;
 					}
 				});
 			}
@@ -518,41 +526,49 @@ let asphalt = (function() {
 	let allowed = [];
 	let party = false;
 
-	let bindListeners = () => {
+	let bindListeners = callback => {
+		if(!callback) callback = function(){};
+
 		chrome.tabs.onCreated.addListener(details => {
 			if(party || isAllowed('oncreated')) {
 				console.log("Tab Created: ", details);
 			}
+			callback();
 		});
 
 		chrome.tabs.onRemoved.addListener((tabId, details) => {
 			if(party || isAllowed('onremoved')) {
 				console.log("Tab Removed: ", tabId, details);
 			}
+			callback();
 		});
 
 		chrome.tabs.onUpdated.addListener((tabId, details) => {
 			if(party || isAllowed('onupdated')) {
-			console.log("Tab Updated: ", tabId, details);
-		}
+				console.log("Tab Updated: ", tabId, details);
+			}
+			callback();
 		});
 
 		chrome.webNavigation.onBeforeNavigate.addListener(details => {
 			if(party || isAllowed('onbeforenavigate')) {
 				console.log("OnBeforeNavigate Fired: ", details);
 			}
+			callback();
 		});
 
 		chrome.webNavigation.onCommitted.addListener(details => {
 			if(party || isAllowed('oncommitted')) {
 				console.log("OnCommitted Fired: ", details);
 			}
+			callback();
 		});
 
 		chrome.webNavigation.onDOMContentLoaded.addListener(details => {
 			if(party || isAllowed('ondomcontentloaded')) {
 				console.log("OnDOMContentLoaded Fired: ", details);
 			}
+			callback();
 		});
 	};
 
@@ -577,8 +593,8 @@ let asphalt = (function() {
 
 	let printTree = node => {
 		let pname = "(hopscotch)";
-		if(node.getParent()) pname = node.getParent().get('name');
-		console.log(`${pname} -> ${node.get('name')}`);
+		if(node.getParent()) pname = `${node.getParent().get('name')} ${node.getParent().get('url')}`;
+		console.log(`${pname} -> ${node.get('name')} ${node.get('url')}`);
 
 		if(node.getChildren()) {
 			node.getChildren().forEach(child => {
