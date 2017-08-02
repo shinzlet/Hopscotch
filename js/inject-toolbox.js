@@ -89,6 +89,23 @@ let toolbox = (function() {
 			};
 		}
 
+		let settingToggle = (name, property) => {
+			let elem = createElement('div', {class: `${hsp}setting-toggle`}).setTextContent(name);
+
+			elem.addEventListener('click', () => {
+				let state = elem.classList.toggle(`${hsp}active`);
+				chrome.runtime.sendMessage({action: 'alterConfig', property: property, value: state});
+			});
+
+			elem.show = state => {
+				elem.classList.toggle(`${hsp}active`, state);
+			}
+
+			elem.property = property;
+
+			return elem;
+		};
+
 		// Initialize components
 		components.docfrag = document.createDocumentFragment();
 
@@ -107,7 +124,7 @@ let toolbox = (function() {
 		components.chinbar = createElement('div', {class: `${hsp}bar`, id: `${hsp}chinbar`});
 
 		components.toolbar.buttons = panel(components.slices, switchMenu);
-		components.chinbar.buttonNames = ['backstep', 'add', 'remove', 'resolve'];
+		components.chinbar.buttonNames = ['backstep', 'remove', 'splice', 'resolve'];
 		components.chinbar.buttons = components.chinbar.buttonNames.map(name => {
 			return button(name, chinbarButtonPressed);
 		});
@@ -123,6 +140,10 @@ let toolbox = (function() {
 		components.frame.appendChild(components.chinbar);
 		components.sandwich.appendChild(components.browser);
 		components.sandwich.appendChild(components.settings);
+		components.settings.appendChild(settingToggle("Scrollbar Hiding", 'scrollbarHiding'));
+		components.settings.appendChild(settingToggle("Attempt Stitching", 'attemptStitching'));
+		components.settings.appendChild(settingToggle("Tree Simplification", 'treeSimplification'));
+
 		components.toolbar.buttons.appendTo(components.toolbar);
 		components.toolbar.appendChild(button('reload', () => {
 			loadLinks();
@@ -200,14 +221,6 @@ let toolbox = (function() {
 			hovered = false;
 			document.body.style.overflowY = 'auto';
 		});
-	}
-
-	/*
-		loadRoots():
-			Retrieves a list of root nodes and installs them into the 'root' tab.
-	*/
-	function loadRoots() {
-
 	}
 
 	/*
@@ -346,9 +359,7 @@ let toolbox = (function() {
 
 		let activeButtons = [];
 
-		if(name === 'root') {
-			activeButtons = ['add', 'remove'];
-		} else if(name === 'browser') {
+		if(name === 'browser') {
 			activeButtons = components.chinbar.buttonNames;
 			activeButtons.splice(activeButtons.indexOf('resolve'), 1)
 		}
@@ -416,6 +427,7 @@ let toolbox = (function() {
 				document.body.classList.toggle(`${hsp}remove-scrollbar`, config.scrollbarHiding);
 			});
 		}
+
 
 
 		bindShortcut({keys: config.shortcut, callback: toggle});

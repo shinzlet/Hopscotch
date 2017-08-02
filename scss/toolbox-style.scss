@@ -40,6 +40,8 @@ $link-highlight-name-color: $frame-bg;
 $link-line-height: 18px;
 $link-font-size: 14px;
 
+$setting-name-color: white;
+
 $scrollbar-radius: 0px;
 $scrollbar-color: $link-highlight;
 $scrollbar-width: 10px;
@@ -161,10 +163,6 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 			background: $toolbar-button-active-color;
 		}
 
-		&.hopscotch-toolbox-button-add {
-			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/add-icon.svg');
-		}
-
 		&.hopscotch-toolbox-button-reload {
 			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/reload-icon.svg');
 		}
@@ -179,6 +177,10 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 
 		&.hopscotch-toolbox-button-backstep {
 			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/backstep-icon.svg');
+		}
+
+		&.hopscotch-toolbox-button-splice {
+			-webkit-mask-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/splice-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-resolve {
@@ -298,5 +300,36 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		background: white;
 		display: inline-block;
 		shape-rendering: crispEdges;
+	}
+}
+
+.hopscotch-toolbox-setting-toggle {
+	width: 100%;
+	min-height: $link-min-height;
+	text-align: right;
+	display: flex;
+	align-items: center;
+	font-size: 16px;
+	color: $setting-name-color;
+
+	&:hover {
+		background: $link-highlight;
+		cursor: pointer;
+	}
+
+	&::before {
+		content: '';
+		display: inline-block;
+		width: $link-min-height;
+		height: $link-min-height;
+		background-position: center;
+		background-repeat: no-repeat;
+		background-size: 80%;
+
+		background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-icon.svg');
+	}
+
+	&.hopscotch-toolbox-active::before {
+		background-image: url('chrome-extension://fpjgfoahemcodocejmieioppledckdlo/assets/img/checkbox-checked-icon.svg');
 	}
 }

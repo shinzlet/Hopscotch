@@ -524,6 +524,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 				});
 			}
 			sendResponse({success: success});
+		} else if(message.action === 'alterConfig') {
+			config[message.property] = message.value;
 		}
 	});
 });
