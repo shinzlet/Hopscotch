@@ -1,11 +1,11 @@
 @font-face {
-	src: url('chrome-extension://__MSG_@@extension_id__//assets/font/FiraCode-Regular.ttf');
+	src: url('chrome-extension://__MSG_@@extension_id__/assets/font/FiraCode-Regular.ttf');
 	font-family: 'Fira Code';
 	font-weight: normal;
 }
 
 @font-face {
-	src: url('chrome-extension://__MSG_@@extension_id__//assets/font/FiraCode-Bold.ttf');
+	src: url('chrome-extension://__MSG_@@extension_id__/assets/font/FiraCode-Bold.ttf');
 	font-family: 'Fira Code';
 	font-weight: bold;
 }
@@ -88,7 +88,7 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		z-index: inherit;
 		width: $frame-width;
 		height: $hat-size;
-		background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/hat-icon.svg');
+		background-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/hat-icon.svg');
 		background-position: $hat-position;
 		background-repeat: no-repeat;
 		transform: $hat-transform;
@@ -165,32 +165,32 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		}
 
 		&.hopscotch-toolbox-button-reload {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/reload-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/reload-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-remove {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/remove-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/remove-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-browser {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/hopscotch-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/hopscotch-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-backstep {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/backstep-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/backstep-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-splice {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/splice-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/splice-icon.svg');
 		}
 
 		&.hopscotch-toolbox-button-resolve {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/resolve-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/resolve-icon.svg');
 			float: right !important;
 		}
 
 		&.hopscotch-toolbox-button-settings {
-			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/settings-icon.svg');
+			-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/settings-icon.svg');
 			float: right !important;
 		}
 	}
@@ -258,13 +258,13 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 					background-repeat: no-repeat;
 					background-size: 80%;
 
-					background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/checkbox-icon.svg');
+					background-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/checkbox-icon.svg');
 				}
 
 				&.hopscotch-toolbox-active {
 					color: $setting-name-color;
 					&::before {
-						background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/checkbox-checked-icon.svg');
+						background-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/checkbox-checked-icon.svg');
 					}
 				}
 			}
@@ -338,7 +338,7 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 		content: '';
 		width: $widget-size;
 		height: $widget-size;
-		-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/notification-icon.svg');
+		-webkit-mask-image: url('chrome-extension://__MSG_@@extension_id__/assets/img/notification-icon.svg');
 		-webkit-mask-position: center;
 		-webkit-mask-repeat: no-repeat;
 		-webkit-mask-size: 80%;
