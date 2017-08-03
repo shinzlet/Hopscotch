@@ -10,7 +10,7 @@ Hopscotch is a chrome extension designed to non-intrusively allow you to save yo
 convenient tree, which makes finding that one page you lost much easier.
 
 How does this work?
-## With the power of trees!
+#### With the power of trees!
 Conventionally, browsers store a very narrow minded snippet of your history that you can traverse.
 When you press the forward button, you go to whatever the last thing you went to from the current
 page was, and the back button is similar. The problem is, whenever you go to a new page, that old
@@ -22,7 +22,7 @@ page from another, it creates a branch off of the parent page, allowing it to be
 from the other pages. Then, when you want to find the page you were looking for, you can just
 follow that path to get there.
 
-## Why is this better than going to your browser history and looking there?
+### Why is this better than going to your browser history and looking there?
 Browser history is **chronological**, meaning all it cares about is when you were on a page.
 Hopscotch is a web of linked topics, which means that it keeps track of things the same way
 you do - by what you were doing (or looking at) when you found that page.
