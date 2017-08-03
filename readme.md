@@ -56,7 +56,7 @@ Because there are multiple links to go forward to, we have to specify which one.
 
 That's where **action mode** comes in. By right clicking a link, it'll change the title's color to indicate you've selected it. From here, you have a couple choices. Left clicking that same link will do what we wanted, moving the link browser to see it's branches. However, we can also press the remove button to delete the selected branch, or (if it's not disabled) the resolve button, which will hook your current branch to that node.
 
-# If this is all you want to read, that's fine.
+# If you want to stop reading now, that's fine.
 From this point on, we're getting to the niche feature set that you probably won't need. Even I don't use (much of) this stuff, but I felt like I should add it.
 
 ### What all the settings do:
