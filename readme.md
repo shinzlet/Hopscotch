@@ -6,7 +6,7 @@
 </h1>
 
 # Hopscotch provides a more intuitive browsing experience
-Hopscotch is a chrome extension designed to non-intrusively allow you to save your history as a
+Hopscotch is a Google Chrome extension designed to non-intrusively allow you to save your history as a
 convenient tree, which makes finding that one page you lost much easier.
 
 How does this work?
@@ -26,3 +26,25 @@ follow that path to get there.
 Browser history is **chronological**, meaning all it cares about is when you were on a page.
 Hopscotch is a web of linked topics, which means that it keeps track of things the same way
 you do - by what you were doing (or looking at) when you found that page.
+
+# Hopscotch kills tabs (in a good way)
+Hopscotch doesn't just make it easier to find things, though. It also provides a large overhaul
+on top of the default tab system found in most browsers. Because of it's tree-based nature,
+Hopscotch doesn't like tabs, as they each behave like their own separate history list. Under
+the hood, Hopscotch connects all of your tabs to a common root, so that each tab is just like
+a window that looks at some part of the main tree.
+
+### What do I get out of that?
+For the user, this allows tabs to not store any data. If you close a tab, all of that nice linked
+history you built up in it is still there, and if you want to, you can just move another tab so
+that it's looking at that history. You don't even need to close a tab to do that! You can move
+two (or more) tabs to the same node on the tree, and look at different pages in all of them, and
+then find any of those new pages in any of the tabs!
+
+Seriously, it's great.
+
+# Do I have to do anything to keep it working?
+Not unless you want to. Hopscotch is configured by default to handle everything by itself.
+If you'd like more accurate control (choosing what happens when you open a new tab, for example),
+you can do that too! Hopscotch has a small settings menu that lets you configure it so that it
+works how you want it to.
