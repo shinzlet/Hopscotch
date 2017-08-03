@@ -226,6 +226,9 @@ let toolbox = (function() {
 				case 'reload':
 					loadLinks();
 					break;
+				case 'launchBrowser':
+					toggle(true);
+					break;
 			}
 
 			if(message.requirement) {

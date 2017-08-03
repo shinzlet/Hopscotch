@@ -542,6 +542,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	});
 });
 
+chrome.browserAction.onClicked.addListener(tab => {
+	chrome.tabs.sendMessage(tab.id, {action: 'launchBrowser'});
+});
+
 /*
 	asphalt:
 		A small debugging utility.

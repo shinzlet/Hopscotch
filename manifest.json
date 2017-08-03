@@ -1,13 +1,25 @@
 {
 	"manifest_version": 2,
 	"name": "Hopscotch",
-	"version": "0.8.0",
+	"version": "1.0.0",
+	"description": "Hopscotch provides a GUI for tree-based web browsing.",
 
 	"permissions": [
 		"tabs",
 		"webNavigation",
 		"storage"
 	],
+
+	"icons": {
+		"16": "assets/img/hopscotch-icon16.png",
+		"48": "assets/img/hopscotch-icon48.png",
+		"128": "assets/img/hopscotch-icon128.png"
+	},
+
+	"browser_action": {
+		"default_title": "Hopscotch"
+	},
+
 	"content_scripts": [
 		{
 			"matches": ["<all_urls>"],
@@ -16,9 +28,11 @@
 			"run_at": "document_start"
 		}
 	],
+
 	"background": {
 		"scripts": ["js/hopscotch.js"]
 	},
+
 	"web_accessible_resources": [
 		"assets/*"
 	]
