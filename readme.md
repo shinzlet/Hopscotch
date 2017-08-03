@@ -1,4 +1,6 @@
-<span style="display: flex; align-items: center; justify-content: space-around; width: 50%; margin: 0 auto;">
-	<img src="assets/img/hopscotch-icon128.png">
-	<h1>Hopscotch</h1>
-</span>
+<h1 align="center">
+	<span style="width: 50%;">
+		<img src="assets/img/hopscotch-icon128.png" style="display: inline-block; float: left;" width=24px>
+		<span>Hopscotch</span>
+	</span>
+</h1>
