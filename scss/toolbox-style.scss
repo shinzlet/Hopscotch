@@ -41,6 +41,7 @@ $link-line-height: 18px;
 $link-font-size: 14px;
 
 $setting-name-color: white;
+$setting-name-disabled-color: #555;
 
 $scrollbar-radius: 0px;
 $scrollbar-color: $link-highlight;
@@ -246,6 +247,7 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 			.hopscotch-toolbox-setting-toggle {
 				display: flex;
 				align-items: center;
+				color: $setting-name-disabled-color;
 
 				&::before {
 					content: '';
@@ -259,8 +261,11 @@ body.hopscotch-toolbox-remove-scrollbar::-webkit-scrollbar {
 					background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/checkbox-icon.svg');
 				}
 
-				&.hopscotch-toolbox-active::before {
-					background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/checkbox-checked-icon.svg');
+				&.hopscotch-toolbox-active {
+					color: $setting-name-color;
+					&::before {
+						background-image: url('chrome-extension://__MSG_@@extension_id__//assets/img/checkbox-checked-icon.svg');
+					}
 				}
 			}
 

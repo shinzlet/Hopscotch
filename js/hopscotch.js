@@ -10,8 +10,8 @@ let configReady = false;
 		that the config cannot (or takes absurdly long to) load, these will be defaulted to.
 */
 let config = {
-	"scrollbarHiding": true,
-	"newTabAction": "leaf",
+	"scrollbarHiding": false,
+	"newTabAction": "branch",
 	"attemptStitching": true,
 	"stitchFallback": "branch",
 	"treeSimplification": true,
