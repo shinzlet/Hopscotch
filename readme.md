@@ -22,6 +22,8 @@ page from another, it creates a branch off of the parent page, allowing it to be
 from the other pages. Then, when you want to find the page you were looking for, you can just
 follow that path to get there.
 
+<img align="center" src="http://i.imgur.com/7eKOZ6j.png" alt="A screenshot showing the Hopscotch toolbox.">
+
 ### Why is this better than going to your browser history and looking there?
 Browser history is **chronological**, meaning all it cares about is when you were on a page.
 Hopscotch is a web of linked topics, which means that it keeps track of things the same way
