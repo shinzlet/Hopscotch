@@ -50,3 +50,33 @@ Not unless you want to. Hopscotch is configured by default to handle everything 
 If you'd like more accurate control (choosing what happens when you open a new tab, for example),
 you can do that too! Hopscotch has a small settings menu that lets you configure it so that it
 works how you want it to.
+
+
+# How do I use it?
+To open the Hopscotch toolbox (as shown in the screenshot above), press both Alt keys.
+In the future, I'm planning on making that easily configurable by the user, but there
+are ways to change it if you really want to. In the top left of your screen, a little
+box should pop up. If so, you've done it!
+
+<img src="http://i.imgur.com/3ZvCFHx.png">
+
+Hopscotch's toolbox has three parts:
+- The toolbar,
+- The sandwich,
+- And the chinbar.
+
+The toolbar (the fancy thing at the top), has three buttons. The far left and right buttons
+respectively pull up the link browser and the settings menu. The other button reloads the links
+shown in the browser, but in theory Hopscotch should handle all of that for you.
+
+The sandwich is actually what the settings window and link browser are called together. When I
+started working on this, there were three windows (like how sandwiches are, y'know?), and the
+name stuck. All you need to know is that this is where the links and settings will be shown.
+
+Finally, the chinbar is the small panel beneath the sandwich. It allows you to interact with the
+link browser. In left to right order, the buttons are: backstep, remove, and resolve. The
+backstep button simply lets you step backwards in the tree. It's very similar to your browser's
+back button, but it doesn't change the page - just what links are shown in the toolbox. Remove
+allows you to delete a branch of the tree (we'll get to how in a second), which is handy from
+time to time. Resolve is typically not used, but if you configure Hopscotch to ask you where
+new branches should go, you will use resolve to tell it.
