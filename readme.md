@@ -51,6 +51,16 @@ If you'd like more accurate control (choosing what happens when you open a new t
 you can do that too! Hopscotch has a small settings menu that lets you configure it so that it
 works how you want it to.
 
+# How do I install Hopscotch?
+As I've not yet thrown it on the chrome store, you can't get it the usual way. However, if you
+go to the releases section and click download (or press this link), you'll get the extension
+file (likely called Hopscotch.crx). Now, go to
+<a href="chrome://extensions">chrome://extensions</a> in your browser, and drag the file from
+your downloads folder (or the chrome downloads bar) into the middle of the page. It will ask
+you if you're cool with Hopscotch having it's permissions, but I'll leave that choice up to you.
+(Read the source code if you don't trust me.) After that, you should be good to go. If you want
+to, restarting Chrome will make the experience a whole lot simpler. If you don't, refresh your
+pages.
 
 # How do I use it?
 To open the Hopscotch toolbox (as shown in the screenshot above), press both Alt keys.
